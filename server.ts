@@ -18,22 +18,12 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
-// If CORS_ALLOW_ALL=true is set in environment, allow any origin (debugging only)
-if (process.env.CORS_ALLOW_ALL === "true") {
-  console.warn("CORS_ALLOW_ALL is enabled — allowing any origin (debugging)");
-  app.use(
-    cors({
-      origin: true,
-      credentials: true,
-    })
-  );
-} else {
   app.use(
     cors({
       origin: allowedOrigins,
     })
   );
-}
+    
 app.use(express.json());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
