@@ -2,9 +2,6 @@
 
 This is the backend service for the NFT Marketplace application, built with Node.js, Express, and TypeScript. It handles NFT data management, storage, and provides a RESTful API for the frontend.
 
-## Deployment on Vercel
-
-nft-store-backend.vercel.app
 
 ## Tech Stack
 
@@ -61,8 +58,6 @@ To run the server in development mode with auto-reloading (using `ts-node-dev`),
 npm run dev
 ```
 
-The server will start on the port specified in your `.env` file (e.g., `http://localhost:5002`).
-
 ## API Endpoints
 
 - `GET /api/NFTs`
@@ -79,4 +74,3 @@ The server will start on the port specified in your `.env` file (e.g., `http://l
     - `price` (Number)
     - `image` (File)
   - Returns the newly created NFT object as JSON.
-
