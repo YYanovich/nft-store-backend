@@ -1,0 +1,838 @@
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/><script type="importmap">{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.167.0/three.module.min.js"
+  }
+}</script><script>let tokenData = {"tokenId":"505000457","externalAssetDependencies":[{"cid":"","dependency_type":"ONCHAIN","data":{},"bytecode_address":"0x00000000a78e278b2d2e2935faebe19ee9f1ff14"}],"preferredIPFSGateway":"https://ipfs.io/ipfs/","preferredArweaveGateway":"https://arweave.net/","hash":"0x200a5dfb5083ffc5c0e3bf70afc63cc615a53258f8c02c307f9a165fd3d37d9b"}
+</script><style type="text/css">html {
+  height: 100%;
+}
+body {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+canvas {
+  padding: 0;
+  margin: auto;
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}</style></head><body><script type="module">import * as THREE from 'three';
+
+// Library imports
+function getWorldSpaceHalfWidth(t,e,n){return _clipToWorldVector.set(0,0,-e,1).applyMatrix4(t.projectionMatrix),_clipToWorldVector.multiplyScalar(1/_clipToWorldVector.w),_clipToWorldVector.x=_lineWidth/n.width,_clipToWorldVector.y=_lineWidth/n.height,_clipToWorldVector.applyMatrix4(t.projectionMatrixInverse),_clipToWorldVector.multiplyScalar(1/_clipToWorldVector.w),Math.abs(Math.max(_clipToWorldVector.x,_clipToWorldVector.y))}function raycastWorldUnits(t,e){const n=t.matrixWorld,i=t.geometry,r=i.attributes.instanceStart,a=i.attributes.instanceEnd;for(let o=0,s=Math.min(i.instanceCount,r.count);o<s;o++){_line.start.fromBufferAttribute(r,o),_line.end.fromBufferAttribute(a,o),_line.applyMatrix4(n);const i=new Vector3,s=new Vector3;_ray.distanceSqToSegment(_line.start,_line.end,s,i),s.distanceTo(i)<.5*_lineWidth&&e.push({point:s,pointOnLine:i,distance:_ray.origin.distanceTo(s),object:t,face:null,faceIndex:o,uv:null,uv1:null})}}function raycastScreenSpace(t,e,n){const i=e.projectionMatrix,r=t.material.resolution,a=t.matrixWorld,o=t.geometry,s=o.attributes.instanceStart,c=o.attributes.instanceEnd,d=Math.min(o.instanceCount,s.count),l=-e.near;_ray.at(1,_ssOrigin),_ssOrigin.w=1,_ssOrigin.applyMatrix4(e.matrixWorldInverse),_ssOrigin.applyMatrix4(i),_ssOrigin.multiplyScalar(1/_ssOrigin.w),_ssOrigin.x*=r.x/2,_ssOrigin.y*=r.y/2,_ssOrigin.z=0,_ssOrigin3.copy(_ssOrigin),_mvMatrix.multiplyMatrices(e.matrixWorldInverse,a);for(let e=0,o=d;e<o;e++){if(_start4.fromBufferAttribute(s,e),_end4.fromBufferAttribute(c,e),_start4.w=1,_end4.w=1,_start4.applyMatrix4(_mvMatrix),_end4.applyMatrix4(_mvMatrix),_start4.z>l&&_end4.z>l)continue;if(_start4.z>l){const t=_start4.z-_end4.z,e=(_start4.z-l)/t;_start4.lerp(_end4,e)}else if(_end4.z>l){const t=_end4.z-_start4.z,e=(_end4.z-l)/t;_end4.lerp(_start4,e)}_start4.applyMatrix4(i),_end4.applyMatrix4(i),_start4.multiplyScalar(1/_start4.w),_end4.multiplyScalar(1/_end4.w),_start4.x*=r.x/2,_start4.y*=r.y/2,_end4.x*=r.x/2,_end4.y*=r.y/2,_line.start.copy(_start4),_line.start.z=0,_line.end.copy(_end4),_line.end.z=0;const o=_line.closestPointToPointParameter(_ssOrigin3,!0);_line.at(o,_closestPoint);const d=MathUtils.lerp(_start4.z,_end4.z,o),f=d>=-1&&d<=1,h=_ssOrigin3.distanceTo(_closestPoint)<.5*_lineWidth;if(f&&h){_line.start.fromBufferAttribute(s,e),_line.end.fromBufferAttribute(c,e),_line.start.applyMatrix4(a),_line.end.applyMatrix4(a);const i=new Vector3,r=new Vector3;_ray.distanceSqToSegment(_line.start,_line.end,r,i),n.push({point:r,pointOnLine:i,distance:_ray.origin.distanceTo(r),object:t,face:null,faceIndex:e,uv:null,uv1:null})}}}function createMirroredGroup(t,e=!1){const n=new THREE.Group;n.add(t);const i=t.clone();return e&&i.traverse(function(t){if(t.geometry){t.geometry=t.geometry.clone();const e=t.geometry.attributes.position;if(e){const n=e.array;for(let t=0;t<n.length;t+=3)n[t]=-n[t];e.needsUpdate=!0,t.geometry.computeBoundingBox(),t.geometry.computeBoundingSphere()}}}),n.add(i),n.position.set(0,0,0),n.updateMatrixWorld(),n}import{EventDispatcher,Vector3,MOUSE,TOUCH,Spherical,Quaternion,Vector2,Ray,Plane,MathUtils,InstancedBufferGeometry,Float32BufferAttribute,InstancedInterleavedBuffer,InterleavedBufferAttribute,WireframeGeometry,Box3,Sphere,ShaderMaterial,ShaderLib,UniformsUtils,UniformsLib,Mesh,Vector4,Line3,Matrix4}from"three";const _changeEvent={type:"change"},_startEvent={type:"start"},_endEvent={type:"end"},_ray$1=new Ray,_plane=new Plane,TILT_LIMIT=Math.cos(70*MathUtils.DEG2RAD);class OrbitControls extends EventDispatcher{constructor(t,e){function n(t){const e=Math.abs(.01*t);return Math.pow(.95,O.zoomSpeed*e)}function i(t){D.theta-=t}function r(t){D.phi-=t}function a(t){O.object.isPerspectiveCamera||O.object.isOrthographicCamera?I/=t:O.enableZoom=!1}function o(t){O.object.isPerspectiveCamera||O.object.isOrthographicCamera?I*=t:O.enableZoom=!1}function s(t,e){if(!O.zoomToCursor)return;Y=!0;const n=O.domElement.getBoundingClientRect(),i=t-n.left,r=e-n.top,a=n.width,o=n.height;$.x=i/a*2-1,$.y=-r/o*2+1,j.set($.x,$.y,1).unproject(O.object).sub(O.object.position).normalize()}function c(t){return Math.max(O.minDistance,Math.min(O.maxDistance,t))}function d(t){k.set(t.clientX,t.clientY)}function l(t){B.set(t.clientX,t.clientY)}function f(t){if(1===Q.length)k.set(t.pageX,t.pageY);else{const e=L(t),n=.5*(t.pageX+e.x),i=.5*(t.pageY+e.y);k.set(n,i)}}function h(t){if(1===Q.length)B.set(t.pageX,t.pageY);else{const e=L(t),n=.5*(t.pageX+e.x),i=.5*(t.pageY+e.y);B.set(n,i)}}function u(t){const e=L(t),n=t.pageX-e.x,i=t.pageY-e.y,r=Math.sqrt(n*n+i*i);P.set(0,r)}function p(t){if(1==Q.length)F.set(t.pageX,t.pageY);else{const e=L(t),n=.5*(t.pageX+e.x),i=.5*(t.pageY+e.y);F.set(n,i)}C.subVectors(F,k).multiplyScalar(O.rotateSpeed);const e=O.domElement;i(2*Math.PI*C.x/e.clientHeight),r(2*Math.PI*C.y/e.clientHeight),k.copy(F)}function _(t){if(1===Q.length)G.set(t.pageX,t.pageY);else{const e=L(t),n=.5*(t.pageX+e.x),i=.5*(t.pageY+e.y);G.set(n,i)}H.subVectors(G,B).multiplyScalar(O.panSpeed),Z(H.x,H.y),B.copy(G)}function m(t){const e=L(t),n=t.pageX-e.x,i=t.pageY-e.y,r=Math.sqrt(n*n+i*i);R.set(0,r),N.set(0,Math.pow(R.y/P.y,O.zoomSpeed)),a(N.y),P.copy(R),s(.5*(t.pageX+e.x),.5*(t.pageY+e.y))}function y(t){!1!==O.enabled&&(0===Q.length&&(O.domElement.setPointerCapture(t.pointerId),O.domElement.addEventListener("pointermove",v),O.domElement.addEventListener("pointerup",w)),function(t){for(let e=0;e<Q.length;e++)if(Q[e]==t.pointerId)return!0;return!1}(t)||(function(t){Q.push(t.pointerId)}(t),"touch"===t.pointerType?x(t):function(t){let e;switch(t.button){case 0:e=O.mouseButtons.LEFT;break;case 1:e=O.mouseButtons.MIDDLE;break;case 2:e=O.mouseButtons.RIGHT;break;default:e=-1}switch(e){case MOUSE.DOLLY:if(!1===O.enableZoom)return;!function(t){s(t.clientX,t.clientX),P.set(t.clientX,t.clientY)}(t),T=A.DOLLY;break;case MOUSE.ROTATE:if(t.ctrlKey||t.metaKey||t.shiftKey){if(!1===O.enablePan)return;l(t),T=A.PAN}else{if(!1===O.enableRotate)return;d(t),T=A.ROTATE}break;case MOUSE.PAN:if(t.ctrlKey||t.metaKey||t.shiftKey){if(!1===O.enableRotate)return;d(t),T=A.ROTATE}else{if(!1===O.enablePan)return;l(t),T=A.PAN}break;default:T=A.NONE}T!==A.NONE&&O.dispatchEvent(_startEvent)}(t)))}function v(t){!1!==O.enabled&&("touch"===t.pointerType?function(t){switch(E(t),T){case A.TOUCH_ROTATE:if(!1===O.enableRotate)return;p(t),O.update();break;case A.TOUCH_PAN:if(!1===O.enablePan)return;_(t),O.update();break;case A.TOUCH_DOLLY_PAN:if(!1===O.enableZoom&&!1===O.enablePan)return;!function(t){O.enableZoom&&m(t),O.enablePan&&_(t)}(t),O.update();break;case A.TOUCH_DOLLY_ROTATE:if(!1===O.enableZoom&&!1===O.enableRotate)return;!function(t){O.enableZoom&&m(t),O.enableRotate&&p(t)}(t),O.update();break;default:T=A.NONE}}(t):function(t){switch(T){case A.ROTATE:if(!1===O.enableRotate)return;!function(t){F.set(t.clientX,t.clientY),C.subVectors(F,k).multiplyScalar(O.rotateSpeed);const e=O.domElement;i(2*Math.PI*C.x/e.clientHeight),r(2*Math.PI*C.y/e.clientHeight),k.copy(F),O.update()}(t);break;case A.DOLLY:if(!1===O.enableZoom)return;!function(t){R.set(t.clientX,t.clientY),N.subVectors(R,P),N.y>0?a(n(N.y)):N.y<0&&o(n(N.y)),P.copy(R),O.update()}(t);break;case A.PAN:if(!1===O.enablePan)return;!function(t){G.set(t.clientX,t.clientY),H.subVectors(G,B).multiplyScalar(O.panSpeed),Z(H.x,H.y),B.copy(G),O.update()}(t)}}(t))}function w(t){switch(function(t){delete X[t.pointerId];for(let e=0;e<Q.length;e++)if(Q[e]==t.pointerId)return void Q.splice(e,1)}(t),Q.length){case 0:O.domElement.releasePointerCapture(t.pointerId),O.domElement.removeEventListener("pointermove",v),O.domElement.removeEventListener("pointerup",w),O.dispatchEvent(_endEvent),T=A.NONE;break;case 1:const e=Q[0],n=X[e];x({pointerId:e,pageX:n.x,pageY:n.y})}}function b(t){!1!==O.enabled&&!1!==O.enableZoom&&T===A.NONE&&(t.preventDefault(),O.dispatchEvent(_startEvent),function(t){s(t.clientX,t.clientY),t.deltaY<0?o(n(t.deltaY)):t.deltaY>0&&a(n(t.deltaY)),O.update()}(function(t){const e=t.deltaMode,n={clientX:t.clientX,clientY:t.clientY,deltaY:t.deltaY};switch(e){case 1:n.deltaY*=16;break;case 2:n.deltaY*=100}return t.ctrlKey&&!q&&(n.deltaY*=10),n}(t)),O.dispatchEvent(_endEvent))}function g(t){"Control"===t.key&&(q=!0,O.domElement.getRootNode().addEventListener("keyup",S,{passive:!0,capture:!0}))}function S(t){"Control"===t.key&&(q=!1,O.domElement.getRootNode().removeEventListener("keyup",S,{passive:!0,capture:!0}))}function M(t){!1!==O.enabled&&!1!==O.enablePan&&function(t){let e=!1;switch(t.code){case O.keys.UP:t.ctrlKey||t.metaKey||t.shiftKey?r(2*Math.PI*O.rotateSpeed/O.domElement.clientHeight):Z(0,O.keyPanSpeed),e=!0;break;case O.keys.BOTTOM:t.ctrlKey||t.metaKey||t.shiftKey?r(-2*Math.PI*O.rotateSpeed/O.domElement.clientHeight):Z(0,-O.keyPanSpeed),e=!0;break;case O.keys.LEFT:t.ctrlKey||t.metaKey||t.shiftKey?i(2*Math.PI*O.rotateSpeed/O.domElement.clientHeight):Z(O.keyPanSpeed,0),e=!0;break;case O.keys.RIGHT:t.ctrlKey||t.metaKey||t.shiftKey?i(-2*Math.PI*O.rotateSpeed/O.domElement.clientHeight):Z(-O.keyPanSpeed,0),e=!0}e&&(t.preventDefault(),O.update())}(t)}function x(t){switch(E(t),Q.length){case 1:switch(O.touches.ONE){case TOUCH.ROTATE:if(!1===O.enableRotate)return;f(t),T=A.TOUCH_ROTATE;break;case TOUCH.PAN:if(!1===O.enablePan)return;h(t),T=A.TOUCH_PAN;break;default:T=A.NONE}break;case 2:switch(O.touches.TWO){case TOUCH.DOLLY_PAN:if(!1===O.enableZoom&&!1===O.enablePan)return;!function(t){O.enableZoom&&u(t),O.enablePan&&h(t)}(t),T=A.TOUCH_DOLLY_PAN;break;case TOUCH.DOLLY_ROTATE:if(!1===O.enableZoom&&!1===O.enableRotate)return;!function(t){O.enableZoom&&u(t),O.enableRotate&&f(t)}(t),T=A.TOUCH_DOLLY_ROTATE;break;default:T=A.NONE}break;default:T=A.NONE}T!==A.NONE&&O.dispatchEvent(_startEvent)}function U(t){!1!==O.enabled&&t.preventDefault()}function E(t){let e=X[t.pointerId];void 0===e&&(e=new Vector2,X[t.pointerId]=e),e.set(t.pageX,t.pageY)}function L(t){const e=t.pointerId===Q[0]?Q[1]:Q[0];return X[e]}super(),this.object=t,this.domElement=e,this.domElement.style.touchAction="none",this.enabled=!0,this.target=new Vector3,this.cursor=new Vector3,this.minDistance=0,this.maxDistance=1/0,this.minZoom=0,this.maxZoom=1/0,this.minTargetRadius=0,this.maxTargetRadius=1/0,this.minPolarAngle=0,this.maxPolarAngle=Math.PI,this.minAzimuthAngle=-1/0,this.maxAzimuthAngle=1/0,this.enableDamping=!1,this.dampingFactor=.05,this.enableZoom=!0,this.zoomSpeed=1,this.enableRotate=!0,this.rotateSpeed=1,this.enablePan=!0,this.panSpeed=1,this.screenSpacePanning=!0,this.keyPanSpeed=7,this.zoomToCursor=!1,this.autoRotate=!1,this.autoRotateSpeed=2,this.keys={LEFT:"ArrowLeft",UP:"ArrowUp",RIGHT:"ArrowRight",BOTTOM:"ArrowDown"},this.mouseButtons={LEFT:MOUSE.ROTATE,MIDDLE:MOUSE.DOLLY,RIGHT:MOUSE.PAN},this.touches={ONE:TOUCH.ROTATE,TWO:TOUCH.DOLLY_PAN},this.target0=this.target.clone(),this.position0=this.object.position.clone(),this.zoom0=this.object.zoom,this.t=null,this.getPolarAngle=function(){return z.phi},this.getAzimuthalAngle=function(){return z.theta},this.getDistance=function(){return this.object.position.distanceTo(this.target)},this.listenToKeyEvents=function(t){t.addEventListener("keydown",M),this.t=t},this.stopListenToKeyEvents=function(){this.t.removeEventListener("keydown",M),this.t=null},this.saveState=function(){O.target0.copy(O.target),O.position0.copy(O.object.position),O.zoom0=O.object.zoom},this.reset=function(){O.target.copy(O.target0),O.object.position.copy(O.position0),O.object.zoom=O.zoom0,O.object.updateProjectionMatrix(),O.dispatchEvent(_changeEvent),O.update(),T=A.NONE},this.update=function(){const e=new Vector3,n=(new Quaternion).setFromUnitVectors(t.up,new Vector3(0,1,0)),r=n.clone().invert(),a=new Vector3,o=new Quaternion,s=new Vector3,d=2*Math.PI;return function(l=null){const f=O.object.position;e.copy(f).sub(O.target),e.applyQuaternion(n),z.setFromVector3(e),O.autoRotate&&T===A.NONE&&i(function(t){return null!==t?2*Math.PI/60*O.autoRotateSpeed*t:2*Math.PI/60/60*O.autoRotateSpeed}(l)),O.enableDamping?(z.theta+=D.theta*O.dampingFactor,z.phi+=D.phi*O.dampingFactor):(z.theta+=D.theta,z.phi+=D.phi);let h=O.minAzimuthAngle,u=O.maxAzimuthAngle;isFinite(h)&&isFinite(u)&&(h<-Math.PI?h+=d:h>Math.PI&&(h-=d),u<-Math.PI?u+=d:u>Math.PI&&(u-=d),z.theta=h<=u?Math.max(h,Math.min(u,z.theta)):z.theta>(h+u)/2?Math.max(h,z.theta):Math.min(u,z.theta)),z.phi=Math.max(O.minPolarAngle,Math.min(O.maxPolarAngle,z.phi)),z.makeSafe(),!0===O.enableDamping?O.target.addScaledVector(W,O.dampingFactor):O.target.add(W),O.target.sub(O.cursor),O.target.clampLength(O.minTargetRadius,O.maxTargetRadius),O.target.add(O.cursor);let p=!1;if(O.zoomToCursor&&Y||O.object.isOrthographicCamera)z.radius=c(z.radius);else{const t=z.radius;z.radius=c(z.radius*I),p=t!=z.radius}if(e.setFromSpherical(z),e.applyQuaternion(r),f.copy(O.target).add(e),O.object.lookAt(O.target),!0===O.enableDamping?(D.theta*=1-O.dampingFactor,D.phi*=1-O.dampingFactor,W.multiplyScalar(1-O.dampingFactor)):(D.set(0,0,0),W.set(0,0,0)),O.zoomToCursor&&Y){let n=null;if(O.object.isPerspectiveCamera){const t=e.length();n=c(t*I);const i=t-n;O.object.position.addScaledVector(j,i),O.object.updateMatrixWorld(),p=!!i}else if(O.object.isOrthographicCamera){const t=new Vector3($.x,$.y,0);t.unproject(O.object);const i=O.object.zoom;O.object.zoom=Math.max(O.minZoom,Math.min(O.maxZoom,O.object.zoom/I)),O.object.updateProjectionMatrix(),p=i!==O.object.zoom;const r=new Vector3($.x,$.y,0);r.unproject(O.object),O.object.position.sub(r).add(t),O.object.updateMatrixWorld(),n=e.length()}else O.zoomToCursor=!1;null!==n&&(this.screenSpacePanning?O.target.set(0,0,-1).transformDirection(O.object.matrix).multiplyScalar(n).add(O.object.position):(_ray$1.origin.copy(O.object.position),_ray$1.direction.set(0,0,-1).transformDirection(O.object.matrix),Math.abs(O.object.up.dot(_ray$1.direction))<TILT_LIMIT?t.lookAt(O.target):(_plane.setFromNormalAndCoplanarPoint(O.object.up,O.target),_ray$1.intersectPlane(_plane,O.target))))}else if(O.object.isOrthographicCamera){const t=O.object.zoom;O.object.zoom=Math.max(O.minZoom,Math.min(O.maxZoom,O.object.zoom/I)),t!==O.object.zoom&&(O.object.updateProjectionMatrix(),p=!0)}return I=1,Y=!1,!!(p||a.distanceToSquared(O.object.position)>V||8*(1-o.dot(O.object.quaternion))>V||s.distanceToSquared(O.target)>V)&&(O.dispatchEvent(_changeEvent),a.copy(O.object.position),o.copy(O.object.quaternion),s.copy(O.target),!0)}}(),this.dispose=function(){O.domElement.removeEventListener("contextmenu",U),O.domElement.removeEventListener("pointerdown",y),O.domElement.removeEventListener("pointercancel",w),O.domElement.removeEventListener("wheel",b),O.domElement.removeEventListener("pointermove",v),O.domElement.removeEventListener("pointerup",w),O.domElement.getRootNode().removeEventListener("keydown",g,{capture:!0}),null!==O.t&&(O.t.removeEventListener("keydown",M),O.t=null)};const O=this,A={NONE:-1,ROTATE:0,DOLLY:1,PAN:2,TOUCH_ROTATE:3,TOUCH_PAN:4,TOUCH_DOLLY_PAN:5,TOUCH_DOLLY_ROTATE:6};let T=A.NONE;const V=1e-6,z=new Spherical,D=new Spherical;let I=1;const W=new Vector3,k=new Vector2,F=new Vector2,C=new Vector2,B=new Vector2,G=new Vector2,H=new Vector2,P=new Vector2,R=new Vector2,N=new Vector2,j=new Vector3,$=new Vector2;let Y=!1;const Q=[],X={};let q=!1;const J=function(){const t=new Vector3;return function(e,n){t.setFromMatrixColumn(n,0),t.multiplyScalar(-e),W.add(t)}}(),K=function(){const t=new Vector3;return function(e,n){!0===O.screenSpacePanning?t.setFromMatrixColumn(n,1):(t.setFromMatrixColumn(n,0),t.crossVectors(O.object.up,t)),t.multiplyScalar(e),W.add(t)}}(),Z=function(){const t=new Vector3;return function(e,n){const i=O.domElement;if(O.object.isPerspectiveCamera){const r=O.object.position;t.copy(r).sub(O.target);let a=t.length();a*=Math.tan(O.object.fov/2*Math.PI/180),J(2*e*a/i.clientHeight,O.object.matrix),K(2*n*a/i.clientHeight,O.object.matrix)}else O.object.isOrthographicCamera?(J(e*(O.object.right-O.object.left)/O.object.zoom/i.clientWidth,O.object.matrix),K(n*(O.object.top-O.object.bottom)/O.object.zoom/i.clientHeight,O.object.matrix)):O.enablePan=!1}}();O.domElement.addEventListener("contextmenu",U),O.domElement.addEventListener("pointerdown",y),O.domElement.addEventListener("pointercancel",w),O.domElement.addEventListener("wheel",b,{passive:!1}),O.domElement.getRootNode().addEventListener("keydown",g,{passive:!0,capture:!0}),this.update()}}const _box$1=new Box3,_vector=new Vector3;class LineSegmentsGeometry extends InstancedBufferGeometry{constructor(){super(),this.isLineSegmentsGeometry=!0,this.type="LineSegmentsGeometry",this.setIndex([0,2,1,2,3,1,2,4,3,4,5,3,4,6,5,6,7,5]),this.setAttribute("position",new Float32BufferAttribute([-1,2,0,1,2,0,-1,1,0,1,1,0,-1,0,0,1,0,0,-1,-1,0,1,-1,0],3)),this.setAttribute("uv",new Float32BufferAttribute([-1,2,1,2,-1,1,1,1,-1,-1,1,-1,-1,-2,1,-2],2))}applyMatrix4(t){const e=this.attributes.instanceStart,n=this.attributes.instanceEnd;return void 0!==e&&(e.applyMatrix4(t),n.applyMatrix4(t),e.needsUpdate=!0),null!==this.boundingBox&&this.computeBoundingBox(),null!==this.boundingSphere&&this.computeBoundingSphere(),this}setPositions(t){let e;t instanceof Float32Array?e=t:Array.isArray(t)&&(e=new Float32Array(t));const n=new InstancedInterleavedBuffer(e,6,1);return this.setAttribute("instanceStart",new InterleavedBufferAttribute(n,3,0)),this.setAttribute("instanceEnd",new InterleavedBufferAttribute(n,3,3)),this.computeBoundingBox(),this.computeBoundingSphere(),this}setColors(t){let e;t instanceof Float32Array?e=t:Array.isArray(t)&&(e=new Float32Array(t));const n=new InstancedInterleavedBuffer(e,6,1);return this.setAttribute("instanceColorStart",new InterleavedBufferAttribute(n,3,0)),this.setAttribute("instanceColorEnd",new InterleavedBufferAttribute(n,3,3)),this}fromWireframeGeometry(t){return this.setPositions(t.attributes.position.array),this}fromEdgesGeometry(t){return this.setPositions(t.attributes.position.array),this}fromMesh(t){return this.fromWireframeGeometry(new WireframeGeometry(t.geometry)),this}fromLineSegments(t){const e=t.geometry;return this.setPositions(e.attributes.position.array),this}computeBoundingBox(){null===this.boundingBox&&(this.boundingBox=new Box3);const t=this.attributes.instanceStart,e=this.attributes.instanceEnd;void 0!==t&&void 0!==e&&(this.boundingBox.setFromBufferAttribute(t),_box$1.setFromBufferAttribute(e),this.boundingBox.union(_box$1))}computeBoundingSphere(){null===this.boundingSphere&&(this.boundingSphere=new Sphere),null===this.boundingBox&&this.computeBoundingBox();const t=this.attributes.instanceStart,e=this.attributes.instanceEnd;if(void 0!==t&&void 0!==e){const n=this.boundingSphere.center;this.boundingBox.getCenter(n);let i=0;for(let r=0,a=t.count;r<a;r++)_vector.fromBufferAttribute(t,r),i=Math.max(i,n.distanceToSquared(_vector)),_vector.fromBufferAttribute(e,r),i=Math.max(i,n.distanceToSquared(_vector));this.boundingSphere.radius=Math.sqrt(i),isNaN(this.boundingSphere.radius)&&console.error("THREE.LineSegmentsGeometry.computeBoundingSphere(): Computed radius is NaN. The instanced position data is likely to have NaN values.",this)}}toJSON(){}applyMatrix(t){return this.applyMatrix4(t)}}UniformsLib.line={worldUnits:{value:1},linewidth:{value:1},resolution:{value:new Vector2(1,1)},dashOffset:{value:0},dashScale:{value:1},dashSize:{value:1},gapSize:{value:1}},ShaderLib.line={uniforms:UniformsUtils.merge([UniformsLib.common,UniformsLib.fog,UniformsLib.line]),vertexShader:"\n\t\t#include <common>\n\t\t#include <color_pars_vertex>\n\t\t#include <fog_pars_vertex>\n\t\t#include <logdepthbuf_pars_vertex>\n\t\t#include <clipping_planes_pars_vertex>\n\n\t\tuniform float linewidth;\n\t\tuniform vec2 resolution;\n\n\t\tattribute vec3 instanceStart;\n\t\tattribute vec3 instanceEnd;\n\n\t\tattribute vec3 instanceColorStart;\n\t\tattribute vec3 instanceColorEnd;\n\n\t\t#ifdef WORLD_UNITS\n\n\t\t\tvarying vec4 worldPos;\n\t\t\tvarying vec3 worldStart;\n\t\t\tvarying vec3 worldEnd;\n\n\t\t\t#ifdef USE_DASH\n\n\t\t\t\tvarying vec2 vUv;\n\n\t\t\t#endif\n\n\t\t#else\n\n\t\t\tvarying vec2 vUv;\n\n\t\t#endif\n\n\t\t#ifdef USE_DASH\n\n\t\t\tuniform float dashScale;\n\t\t\tattribute float instanceDistanceStart;\n\t\t\tattribute float instanceDistanceEnd;\n\t\t\tvarying float vLineDistance;\n\n\t\t#endif\n\n\t\tvoid trimSegment( const in vec4 start, inout vec4 end ) {\n\n\t\t\t// trim end segment so it terminates between the camera plane and the near plane\n\n\t\t\t// conservative estimate of the near plane\n\t\t\tfloat a = projectionMatrix[ 2 ][ 2 ]; // 3nd entry in 3th column\n\t\t\tfloat b = projectionMatrix[ 3 ][ 2 ]; // 3nd entry in 4th column\n\t\t\tfloat nearEstimate = - 0.5 * b / a;\n\n\t\t\tfloat alpha = ( nearEstimate - start.z ) / ( end.z - start.z );\n\n\t\t\tend.xyz = mix( start.xyz, end.xyz, alpha );\n\n\t\t}\n\n\t\tvoid main() {\n\n\t\t\t#ifdef USE_COLOR\n\n\t\t\t\tvColor.xyz = ( position.y < 0.5 ) ? instanceColorStart : instanceColorEnd;\n\n\t\t\t#endif\n\n\t\t\t#ifdef USE_DASH\n\n\t\t\t\tvLineDistance = ( position.y < 0.5 ) ? dashScale * instanceDistanceStart : dashScale * instanceDistanceEnd;\n\t\t\t\tvUv = uv;\n\n\t\t\t#endif\n\n\t\t\tfloat aspect = resolution.x / resolution.y;\n\n\t\t\t// camera space\n\t\t\tvec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );\n\t\t\tvec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );\n\n\t\t\t#ifdef WORLD_UNITS\n\n\t\t\t\tworldStart = start.xyz;\n\t\t\t\tworldEnd = end.xyz;\n\n\t\t\t#else\n\n\t\t\t\tvUv = uv;\n\n\t\t\t#endif\n\n\t\t\t// special case for perspective projection, and segments that terminate either in, or behind, the camera plane\n\t\t\t// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space\n\t\t\t// but we need to perform ndc-space calculations in the shader, so we must address this issue directly\n\t\t\t// perhaps there is a more elegant solution -- WestLangley\n\n\t\t\tbool perspective = ( projectionMatrix[ 2 ][ 3 ] == - 1.0 ); // 4th entry in the 3rd column\n\n\t\t\tif ( perspective ) {\n\n\t\t\t\tif ( start.z < 0.0 && end.z >= 0.0 ) {\n\n\t\t\t\t\ttrimSegment( start, end );\n\n\t\t\t\t} else if ( end.z < 0.0 && start.z >= 0.0 ) {\n\n\t\t\t\t\ttrimSegment( end, start );\n\n\t\t\t\t}\n\n\t\t\t}\n\n\t\t\t// clip space\n\t\t\tvec4 clipStart = projectionMatrix * start;\n\t\t\tvec4 clipEnd = projectionMatrix * end;\n\n\t\t\t// ndc space\n\t\t\tvec3 ndcStart = clipStart.xyz / clipStart.w;\n\t\t\tvec3 ndcEnd = clipEnd.xyz / clipEnd.w;\n\n\t\t\t// direction\n\t\t\tvec2 dir = ndcEnd.xy - ndcStart.xy;\n\n\t\t\t// account for clip-space aspect ratio\n\t\t\tdir.x *= aspect;\n\t\t\tdir = normalize( dir );\n\n\t\t\t#ifdef WORLD_UNITS\n\n\t\t\t\tvec3 worldDir = normalize( end.xyz - start.xyz );\n\t\t\t\tvec3 tmpFwd = normalize( mix( start.xyz, end.xyz, 0.5 ) );\n\t\t\t\tvec3 worldUp = normalize( cross( worldDir, tmpFwd ) );\n\t\t\t\tvec3 worldFwd = cross( worldDir, worldUp );\n\t\t\t\tworldPos = position.y < 0.5 ? start: end;\n\n\t\t\t\t// height offset\n\t\t\t\tfloat hw = linewidth * 0.5;\n\t\t\t\tworldPos.xyz += position.x < 0.0 ? hw * worldUp : - hw * worldUp;\n\n\t\t\t\t// don't extend the line if we're rendering dashes because we\n\t\t\t\t// won't be rendering the endcaps\n\t\t\t\t#ifndef USE_DASH\n\n\t\t\t\t\t// cap extension\n\t\t\t\t\tworldPos.xyz += position.y < 0.5 ? - hw * worldDir : hw * worldDir;\n\n\t\t\t\t\t// add width to the box\n\t\t\t\t\tworldPos.xyz += worldFwd * hw;\n\n\t\t\t\t\t// endcaps\n\t\t\t\t\tif ( position.y > 1.0 || position.y < 0.0 ) {\n\n\t\t\t\t\t\tworldPos.xyz -= worldFwd * 2.0 * hw;\n\n\t\t\t\t\t}\n\n\t\t\t\t#endif\n\n\t\t\t\t// project the worldpos\n\t\t\t\tvec4 clip = projectionMatrix * worldPos;\n\n\t\t\t\t// shift the depth of the projected points so the line\n\t\t\t\t// segments overlap neatly\n\t\t\t\tvec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;\n\t\t\t\tclip.z = clipPose.z * clip.w;\n\n\t\t\t#else\n\n\t\t\t\tvec2 offset = vec2( dir.y, - dir.x );\n\t\t\t\t// undo aspect ratio adjustment\n\t\t\t\tdir.x /= aspect;\n\t\t\t\toffset.x /= aspect;\n\n\t\t\t\t// sign flip\n\t\t\t\tif ( position.x < 0.0 ) offset *= - 1.0;\n\n\t\t\t\t// endcaps\n\t\t\t\tif ( position.y < 0.0 ) {\n\n\t\t\t\t\toffset += - dir;\n\n\t\t\t\t} else if ( position.y > 1.0 ) {\n\n\t\t\t\t\toffset += dir;\n\n\t\t\t\t}\n\n\t\t\t\t// adjust for linewidth\n\t\t\t\toffset *= linewidth;\n\n\t\t\t\t// adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...\n\t\t\t\toffset /= resolution.y;\n\n\t\t\t\t// select end\n\t\t\t\tvec4 clip = ( position.y < 0.5 ) ? clipStart : clipEnd;\n\n\t\t\t\t// back to clip space\n\t\t\t\toffset *= clip.w;\n\n\t\t\t\tclip.xy += offset;\n\n\t\t\t#endif\n\n\t\t\tgl_Position = clip;\n\n\t\t\tvec4 mvPosition = ( position.y < 0.5 ) ? start : end; // this is an approximation\n\n\t\t\t#include <logdepthbuf_vertex>\n\t\t\t#include <clipping_planes_vertex>\n\t\t\t#include <fog_vertex>\n\n\t\t}\n\t\t",fragmentShader:"\n\t\tuniform vec3 diffuse;\n\t\tuniform float opacity;\n\t\tuniform float linewidth;\n\n\t\t#ifdef USE_DASH\n\n\t\t\tuniform float dashOffset;\n\t\t\tuniform float dashSize;\n\t\t\tuniform float gapSize;\n\n\t\t#endif\n\n\t\tvarying float vLineDistance;\n\n\t\t#ifdef WORLD_UNITS\n\n\t\t\tvarying vec4 worldPos;\n\t\t\tvarying vec3 worldStart;\n\t\t\tvarying vec3 worldEnd;\n\n\t\t\t#ifdef USE_DASH\n\n\t\t\t\tvarying vec2 vUv;\n\n\t\t\t#endif\n\n\t\t#else\n\n\t\t\tvarying vec2 vUv;\n\n\t\t#endif\n\n\t\t#include <common>\n\t\t#include <color_pars_fragment>\n\t\t#include <fog_pars_fragment>\n\t\t#include <logdepthbuf_pars_fragment>\n\t\t#include <clipping_planes_pars_fragment>\n\n\t\tvec2 closestLineToLine(vec3 p1, vec3 p2, vec3 p3, vec3 p4) {\n\n\t\t\tfloat mua;\n\t\t\tfloat mub;\n\n\t\t\tvec3 p13 = p1 - p3;\n\t\t\tvec3 p43 = p4 - p3;\n\n\t\t\tvec3 p21 = p2 - p1;\n\n\t\t\tfloat d1343 = dot( p13, p43 );\n\t\t\tfloat d4321 = dot( p43, p21 );\n\t\t\tfloat d1321 = dot( p13, p21 );\n\t\t\tfloat d4343 = dot( p43, p43 );\n\t\t\tfloat d2121 = dot( p21, p21 );\n\n\t\t\tfloat denom = d2121 * d4343 - d4321 * d4321;\n\n\t\t\tfloat numer = d1343 * d4321 - d1321 * d4343;\n\n\t\t\tmua = numer / denom;\n\t\t\tmua = clamp( mua, 0.0, 1.0 );\n\t\t\tmub = ( d1343 + d4321 * ( mua ) ) / d4343;\n\t\t\tmub = clamp( mub, 0.0, 1.0 );\n\n\t\t\treturn vec2( mua, mub );\n\n\t\t}\n\n\t\tvoid main() {\n\n\t\t\t#include <clipping_planes_fragment>\n\n\t\t\t#ifdef USE_DASH\n\n\t\t\t\tif ( vUv.y < - 1.0 || vUv.y > 1.0 ) discard; // discard endcaps\n\n\t\t\t\tif ( mod( vLineDistance + dashOffset, dashSize + gapSize ) > dashSize ) discard; // todo - FIX\n\n\t\t\t#endif\n\n\t\t\tfloat alpha = opacity;\n\n\t\t\t#ifdef WORLD_UNITS\n\n\t\t\t\t// Find the closest points on the view ray and the line segment\n\t\t\t\tvec3 rayEnd = normalize( worldPos.xyz ) * 1e5;\n\t\t\t\tvec3 lineDir = worldEnd - worldStart;\n\t\t\t\tvec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );\n\n\t\t\t\tvec3 p1 = worldStart + lineDir * params.x;\n\t\t\t\tvec3 p2 = rayEnd * params.y;\n\t\t\t\tvec3 delta = p1 - p2;\n\t\t\t\tfloat len = length( delta );\n\t\t\t\tfloat norm = len / linewidth;\n\n\t\t\t\t#ifndef USE_DASH\n\n\t\t\t\t\t#ifdef USE_ALPHA_TO_COVERAGE\n\n\t\t\t\t\t\tfloat dnorm = fwidth( norm );\n\t\t\t\t\t\talpha = 1.0 - smoothstep( 0.5 - dnorm, 0.5 + dnorm, norm );\n\n\t\t\t\t\t#else\n\n\t\t\t\t\t\tif ( norm > 0.5 ) {\n\n\t\t\t\t\t\t\tdiscard;\n\n\t\t\t\t\t\t}\n\n\t\t\t\t\t#endif\n\n\t\t\t\t#endif\n\n\t\t\t#else\n\n\t\t\t\t#ifdef USE_ALPHA_TO_COVERAGE\n\n\t\t\t\t\t// artifacts appear on some hardware if a derivative is taken within a conditional\n\t\t\t\t\tfloat a = vUv.x;\n\t\t\t\t\tfloat b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;\n\t\t\t\t\tfloat len2 = a * a + b * b;\n\t\t\t\t\tfloat dlen = fwidth( len2 );\n\n\t\t\t\t\tif ( abs( vUv.y ) > 1.0 ) {\n\n\t\t\t\t\t\talpha = 1.0 - smoothstep( 1.0 - dlen, 1.0 + dlen, len2 );\n\n\t\t\t\t\t}\n\n\t\t\t\t#else\n\n\t\t\t\t\tif ( abs( vUv.y ) > 1.0 ) {\n\n\t\t\t\t\t\tfloat a = vUv.x;\n\t\t\t\t\t\tfloat b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;\n\t\t\t\t\t\tfloat len2 = a * a + b * b;\n\n\t\t\t\t\t\tif ( len2 > 1.0 ) discard;\n\n\t\t\t\t\t}\n\n\t\t\t\t#endif\n\n\t\t\t#endif\n\n\t\t\tvec4 diffuseColor = vec4( diffuse, alpha );\n\n\t\t\t#include <logdepthbuf_fragment>\n\t\t\t#include <color_fragment>\n\n\t\t\tgl_FragColor = vec4( diffuseColor.rgb, alpha );\n\n\t\t\t#include <tonemapping_fragment>\n\t\t\t#include <colorspace_fragment>\n\t\t\t#include <fog_fragment>\n\t\t\t#include <premultiplied_alpha_fragment>\n\n\t\t}\n\t\t"};class LineMaterial extends ShaderMaterial{constructor(t){super({type:"LineMaterial",uniforms:UniformsUtils.clone(ShaderLib.line.uniforms),vertexShader:ShaderLib.line.vertexShader,fragmentShader:ShaderLib.line.fragmentShader,clipping:!0}),this.isLineMaterial=!0,this.setValues(t)}get color(){return this.uniforms.diffuse.value}set color(t){this.uniforms.diffuse.value=t}get worldUnits(){return"WORLD_UNITS"in this.defines}set worldUnits(t){!0===t?this.defines.WORLD_UNITS="":delete this.defines.WORLD_UNITS}get linewidth(){return this.uniforms.linewidth.value}set linewidth(t){this.uniforms.linewidth&&(this.uniforms.linewidth.value=t)}get dashed(){return"USE_DASH"in this.defines}set dashed(t){!0===t!==this.dashed&&(this.needsUpdate=!0),!0===t?this.defines.USE_DASH="":delete this.defines.USE_DASH}get dashScale(){return this.uniforms.dashScale.value}set dashScale(t){this.uniforms.dashScale.value=t}get dashSize(){return this.uniforms.dashSize.value}set dashSize(t){this.uniforms.dashSize.value=t}get dashOffset(){return this.uniforms.dashOffset.value}set dashOffset(t){this.uniforms.dashOffset.value=t}get gapSize(){return this.uniforms.gapSize.value}set gapSize(t){this.uniforms.gapSize.value=t}get opacity(){return this.uniforms.opacity.value}set opacity(t){this.uniforms&&(this.uniforms.opacity.value=t)}get resolution(){return this.uniforms.resolution.value}set resolution(t){this.uniforms.resolution.value.copy(t)}get alphaToCoverage(){return"USE_ALPHA_TO_COVERAGE"in this.defines}set alphaToCoverage(t){this.defines&&(!0===t!==this.alphaToCoverage&&(this.needsUpdate=!0),!0===t?this.defines.USE_ALPHA_TO_COVERAGE="":delete this.defines.USE_ALPHA_TO_COVERAGE)}}const _viewport=new Vector4,_start=new Vector3,_end=new Vector3,_start4=new Vector4,_end4=new Vector4,_ssOrigin=new Vector4,_ssOrigin3=new Vector3,_mvMatrix=new Matrix4,_line=new Line3,_closestPoint=new Vector3,_box=new Box3,_sphere=new Sphere,_clipToWorldVector=new Vector4;let _ray,_lineWidth;class LineSegments2 extends Mesh{constructor(t=new LineSegmentsGeometry,e=new LineMaterial({color:16777215*Math.random()})){super(t,e),this.isLineSegments2=!0,this.type="LineSegments2"}computeLineDistances(){const t=this.geometry,e=t.attributes.instanceStart,n=t.attributes.instanceEnd,i=new Float32Array(2*e.count);for(let t=0,r=0,a=e.count;t<a;t++,r+=2)_start.fromBufferAttribute(e,t),_end.fromBufferAttribute(n,t),i[r]=0===r?0:i[r-1],i[r+1]=i[r]+_start.distanceTo(_end);const r=new InstancedInterleavedBuffer(i,2,1);return t.setAttribute("instanceDistanceStart",new InterleavedBufferAttribute(r,1,0)),t.setAttribute("instanceDistanceEnd",new InterleavedBufferAttribute(r,1,1)),this}raycast(t,e){const n=this.material.worldUnits,i=t.camera;null!==i||n||console.error('LineSegments2: "Raycaster.camera" needs to be set in order to raycast against LineSegments2 while worldUnits is set to false.');const r=void 0!==t.params.Line2&&t.params.Line2.threshold||0;_ray=t.ray;const a=this.matrixWorld,o=this.geometry,s=this.material;let c,d;_lineWidth=s.linewidth+r,null===o.boundingSphere&&o.computeBoundingSphere(),_sphere.copy(o.boundingSphere).applyMatrix4(a),c=n?.5*_lineWidth:getWorldSpaceHalfWidth(i,Math.max(i.near,_sphere.distanceToPoint(_ray.origin)),s.resolution),_sphere.radius+=c,!1!==_ray.intersectsSphere(_sphere)&&(null===o.boundingBox&&o.computeBoundingBox(),_box.copy(o.boundingBox).applyMatrix4(a),d=n?.5*_lineWidth:getWorldSpaceHalfWidth(i,Math.max(i.near,_box.distanceToPoint(_ray.origin)),s.resolution),_box.expandByScalar(d),!1!==_ray.intersectsBox(_box)&&(n?raycastWorldUnits(this,e):raycastScreenSpace(this,i,e)))}onBeforeRender(t){const e=this.material.uniforms;e&&e.resolution&&(t.getViewport(_viewport),this.material.uniforms.resolution.value.set(_viewport.z,_viewport.w))}}class LineGeometry extends LineSegmentsGeometry{constructor(){super(),this.isLineGeometry=!0,this.type="LineGeometry"}setPositions(t){const e=t.length-3,n=new Float32Array(2*e);for(let i=0;i<e;i+=3)n[2*i]=t[i],n[2*i+1]=t[i+1],n[2*i+2]=t[i+2],n[2*i+3]=t[i+3],n[2*i+4]=t[i+4],n[2*i+5]=t[i+5];return super.setPositions(n),this}setColors(t){const e=t.length-3,n=new Float32Array(2*e);for(let i=0;i<e;i+=3)n[2*i]=t[i],n[2*i+1]=t[i+1],n[2*i+2]=t[i+2],n[2*i+3]=t[i+3],n[2*i+4]=t[i+4],n[2*i+5]=t[i+5];return super.setColors(n),this}fromLine(t){const e=t.geometry;return this.setPositions(e.attributes.position.array),this}}class Line2 extends LineSegments2{constructor(t=new LineGeometry,e=new LineMaterial({color:16777215*Math.random()})){super(t,e),this.isLine2=!0,this.type="Line2"}}class Random{constructor(t="0x0000000000000000000000000000000000000000000000000000000000000000"){this.useA=!1;let e=function(t){let e=parseInt(t.substring(0,8),16),n=parseInt(t.substring(8,16),16),i=parseInt(t.substring(16,24),16),r=parseInt(t.substring(24,32),16);return function(){e|=0,n|=0,i|=0,r|=0;let t=(e+n|0)+r|0;return r=r+1|0,e=n^n>>>9,n=i+(i<<3)|0,i=i<<21|i>>>11,i=i+t|0,(t>>>0)/4294967296}};this.prngA=new e(t.substring(2,34)),this.prngB=new e(t.substring(34,66));for(let t=0;t<1e6;t+=2)this.prngA(),this.prngB()}random_dec(){return this.useA=!this.useA,this.useA?this.prngA():this.prngB()}random_num(t,e){return t+(e-t)*this.random_dec()}random_int(t,e){return Math.floor(this.random_num(t,e+1))}random_bool(t){return this.random_dec()<t}random_choice(t){return t[this.random_int(0,t.length-1)]}}class UniqueRandomSelector{constructor(t=null){this.randomInt=t||((t,e)=>Math.floor(Math.random()*(e-t+1))+t)}select(t,e){const n=t.length;if(e>=n)return[...t];if(e<=0)return[];const i=[],r={};for(let a=0;a<e;a++){const e=n-a,o=this.randomInt(0,e-1);let s;s=void 0===r[o]?o:r[o];const c=e-1;void 0===r[c]?r[o]=c:r[o]=r[c],i.push(t[s])}return i}selectIndices(t,e){const n=Array.from({length:t},(t,e)=>e);return this.select(n,e)}}class CommandTracker{constructor(){this.typedCommand="",this.maxLength=20,this.commands=new Map,document.addEventListener("keydown",t=>this.handleKeydown(t))}register(t,e){this.commands.set(t,e)}handleKeydown(t){1===t.key.length&&(this.typedCommand+=t.key,this.typedCommand.length>this.maxLength&&(this.typedCommand=this.typedCommand.slice(-this.maxLength))),"Enter"===t.key&&(this.processCommand(),this.typedCommand="")}processCommand(){for(const[t,e]of this.commands)if(this.typedCommand.endsWith(t)){e();break}}}const objData={collision:{geometries:[{uuid:"d37fc80b-30fb-43f2-aded-9e6f62e8abac",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:
+
+[-.75,.22,1.8,-1.49,1.75,3.47,-1.45,1.78,3.46,-.75,.22,1.8,-1.45,1.78,3.46,-.61,.32,1.8,-.71,.4,3.65,-.61,.32,1.8,-1.45,1.78,3.46,-.71,.4,3.65,-1.45,1.78,3.46,-1.45,1.78,4.12,-1.49,1.75,4.14,-.84,.29,3.64,-.71,.4,3.65,-1.49,1.75,4.14,-.71,.4,3.65,-1.45,1.78,4.12,-1.49,1.75,4.14,-1.45,1.78,4.12,-1.45,1.78,3.46,-1.49,1.75,4.14,-1.45,1.78,3.46,-1.49,1.75,3.47,-.84,.29,3.64,-1.49,1.75,4.14,-1.49,1.75,3.47,-.84,.29,3.64,-1.49,1.75,3.47,-.75,.22,1.8]},normal:{itemSize:3,type:"Float32Array",array:[-.56,.47,-.68,-.56,.47,-.68,-.56,.47,-.68,-.43,.56,-.71,-.43,.56,-.71,-.43,.56,-.71,.88,.48,.03,.88,.48,.03,.88,.48,.03,.88,.47,0,.88,.47,0,.88,.47,0,.17,-.25,.95,.17,-.25,.95,.17,-.25,.95,.38,-.12,.92,.38,-.12,.92,.38,-.12,.92,-.6,.8,0,-.6,.8,0,-.6,.8,0,-.6,.8,0,-.6,.8,0,-.6,.8,0,-.91,-.41,0,-.91,-.41,0,-.91,-.41,0,-.91,-.41,-.03,-.91,-.41,-.03,-.91,-.41,-.03]}}}},{uuid:"881e533b-b4c4-4dac-b3dd-702e3cec9f9c",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[0,-.36,-3.18,-.57,-.11,-3.21,-.22,-.07,-4.88,0,-.36,-3.18,-.22,-.07,-4.88,0,-.14,-4.88,0,.8,-1.13,0,.54,-3.38,-.42,.29,-3.32,0,.8,-1.13,-.42,.29,-3.32,-.75,.44,-.97,-.18,.09,-4.88,0,.19,-4.88,0,-.09,-5.28,0,-.39,-.77,-.9,-.13,-.74,-.57,-.11,-3.21,0,-.39,-.77,-.57,-.11,-3.21,0,-.36,-3.18,-.42,.29,-3.32,0,.54,-3.38,0,.19,-4.88,-.42,.29,-3.32,0,.19,-4.88,-.18,.09,-4.88,-.18,.09,-4.88,-.22,-.07,-4.88,-.57,-.11,-3.21,-.18,.09,-4.88,-.57,-.11,-3.21,-.42,.29,-3.32,-.76,-.19,4.55,-.75,.19,4.55,-.84,.16,2.91,-.76,-.19,4.55,-.84,.16,2.91,-.93,-.33,2.91,0,-.09,-5.28,-.22,-.07,-4.88,-.18,.09,-4.88,-.75,.44,-.97,-.42,.29,-3.32,-.57,-.11,-3.21,-.75,.44,-.97,-.57,-.11,-3.21,-.9,-.13,-.74,-.75,.33,.5,0,.82,.48,0,.8,-1.13,-.75,.33,.5,0,.8,-1.13,-.75,.44,-.97,-.93,-.33,2.91,-.84,.16,2.91,-.75,.33,.5,-.93,-.33,2.91,-.75,.33,.5,-.91,-.13,.5,-.75,.19,4.55,0,.07,4.53,0,.46,2.89,-.75,.19,4.55,0,.46,2.89,-.84,.16,2.91,-.84,.16,2.91,0,.46,2.89,0,.82,.48,-.84,.16,2.91,0,.82,.48,-.75,.33,.5,0,-.26,4.53,-.76,-.19,4.55,-.93,-.33,2.91,0,-.26,4.53,-.93,-.33,2.91,0,-.34,2.89,-.75,.33,.5,-.75,.44,-.97,-.9,-.13,-.74,-.75,.33,.5,-.9,-.13,-.74,-.91,-.13,.5,0,-.37,.48,-.91,-.13,.5,-.9,-.13,-.74,0,-.37,.48,-.9,-.13,-.74,0,-.39,-.77,-.22,-.07,-4.88,0,-.09,-5.28,0,-.14,-4.88,0,-.34,2.89,-.93,-.33,2.91,-.91,-.13,.5,0,-.34,2.89,-.91,-.13,.5,0,-.37,.48,0,.07,4.53,-.75,.19,4.55,-.76,-.19,4.55,0,.07,4.53,-.76,-.19,4.55,0,-.26,4.53]},normal:{itemSize:3,type:"Float32Array",array:[-.4,-.91,-.1,-.4,-.91,-.1,-.4,-.91,-.1,-.29,-.95,-.12,-.29,-.95,-.12,-.29,-.95,-.12,-.52,.85,-.1,-.52,.85,-.1,-.52,.85,-.1,-.45,.88,-.12,-.45,.88,-.12,-.45,.88,-.12,-.43,.74,-.52,-.43,.74,-.52,-.43,.74,-.52,-.28,-.96,-.04,-.28,-.96,-.04,-.28,-.96,-.04,-.41,-.91,-.01,-.41,-.91,-.01,-.41,-.91,-.01,-.53,.83,-.19,-.53,.83,-.19,-.53,.83,-.19,-.49,.85,-.18,-.49,.85,-.18,-.49,.85,-.18,-.95,.24,-.19,-.95,.24,-.19,-.95,.24,-.19,-.94,.29,-.18,-.94,.29,-.18,-.94,.29,-.18,-1,.03,.05,-1,.03,.05,-1,.03,.05,-.98,.18,.09,-.98,.18,.09,-.98,.18,.09,-.85,.21,-.48,-.85,.21,-.48,-.85,.21,-.48,-.94,.3,-.15,-.94,.3,-.15,-.94,.3,-.15,-.97,.22,-.13,-.97,.22,-.13,-.97,.22,-.13,-.55,.83,-.01,-.55,.83,-.01,-.55,.83,-.01,-.42,.9,.07,-.42,.9,.07,-.42,.9,.07,-.98,.18,-.03,-.98,.18,-.03,-.98,.18,-.03,-.94,.33,.02,-.94,.33,.02,-.94,.33,.02,.16,.96,.23,.16,.96,.23,.16,.96,.23,-.33,.94,0,-.33,.94,0,-.33,.94,0,-.33,.93,.14,-.33,.93,.14,-.33,.93,.14,-.55,.83,.04,-.55,.83,.04,-.55,.83,.04,-.09,-.99,.1,-.09,-.99,.1,-.09,-.99,.1,0,-1,.05,0,-1,.05,0,-1,.05,-.96,.27,.02,-.96,.27,.02,-.96,.27,.02,-.94,.33,0,-.94,.33,0,-.94,.33,0,-.26,-.97,-.01,-.26,-.97,-.01,-.26,-.97,-.01,-.28,-.96,.01,-.28,-.96,.01,-.28,-.96,.01,-.29,-.95,-.13,-.29,-.95,-.13,-.29,-.95,-.13,-.01,-1,-.08,-.01,-1,-.08,-.01,-1,-.08,-.26,-.97,.01,-.26,-.97,.01,-.26,-.97,.01,.02,0,1,.02,0,1,.02,0,1,.02,0,1,.02,0,1,.02,0,1]}}}},{uuid:"9282b601-44ed-4904-abb8-8b10ed2d16e3",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[-4.07,0,1.65,-4.09,0,2.74,-.68,0,2.35,-4.07,0,1.65,-.68,0,2.35,-.68,0,-.76,-4.04,-.04,1.65,-4.07,0,1.65,-.68,0,-.76,-4.04,-.04,1.65,-.68,0,-.76,-.68,-.18,-.76,-4.06,-.04,2.72,-4.04,-.04,1.65,-.68,-.18,-.76,-4.06,-.04,2.72,-.68,-.18,-.76,-.68,-.18,2.35,-4.07,0,1.65,-4.29,0,1.87,-4.27,0,2.74,-4.07,0,1.65,-4.27,0,2.74,-4.09,0,2.74,-4.24,-.04,2.72,-4.25,-.04,1.87,-4.04,-.04,1.65,-4.24,-.04,2.72,-4.04,-.04,1.65,-4.06,-.04,2.72,-4.29,0,1.87,-4.25,-.04,1.87,-4.24,-.04,2.72,-4.29,0,1.87,-4.24,-.04,2.72,-4.27,0,2.74,-4.06,-.04,2.72,-4.09,0,2.74,-4.27,0,2.74,-4.06,-.04,2.72,-4.27,0,2.74,-4.24,-.04,2.72,-.68,0,2.35,-4.09,0,2.74,-4.06,-.04,2.72,-.68,0,2.35,-4.06,-.04,2.72,-.68,-.18,2.35]},normal:{itemSize:3,type:"Float32Array",array:[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,-.52,-.45,-.73,-.52,-.45,-.73,-.52,-.45,-.73,-.58,0,-.81,-.58,0,-.81,-.58,0,-.81,-.04,-1,0,-.04,-1,0,-.04,-1,0,-.04,-1,0,-.04,-1,0,-.04,-1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,-.76,-.65,.01,-.76,-.65,.01,-.76,-.65,.01,-.76,-.65,.01,-.76,-.65,.01,-.76,-.65,.01,.01,-.52,.85,.01,-.52,.85,.01,-.52,.85,.01,-.52,.85,.01,-.52,.85,.01,-.52,.85,.1,-.47,.88,.1,-.47,.88,.1,-.47,.88,.11,0,.99,.11,0,.99,.11,0,.99]}}}},{uuid:"f4d8489b-c30b-4d16-9a18-3cc09579cb1d",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[-1.51,0,4.58,-1.11,0,4.42,-1.11,0,2.98,-1.51,0,4.58,-1.11,0,2.98,-1.5,0,3.21,-1.52,-.05,3.25,-1.5,0,3.21,-1.11,0,2.98,-1.52,-.05,3.25,-1.11,0,2.98,-1.14,-.05,3.02,-1.14,-.05,4.41,-1.53,-.05,4.57,-1.52,-.05,3.25,-1.14,-.05,4.41,-1.52,-.05,3.25,-1.14,-.05,3.02,-1.51,0,4.58,-2.52,0,4.76,-2.5,-.05,4.74,-1.51,0,4.58,-2.5,-.05,4.74,-1.53,-.05,4.57,-2.65,-.05,4.74,-2.69,-.05,4.32,-2.5,-.05,4.1,-2.65,-.05,4.74,-2.5,-.05,4.1,-2.5,-.05,4.74,-2.69,-.05,4.32,-2.71,0,4.32,-2.52,0,4.09,-2.69,-.05,4.32,-2.52,0,4.09,-2.5,-.05,4.1,-1.51,0,4.58,-1.5,0,3.21,-2.52,0,4.09,-1.51,0,4.58,-2.52,0,4.09,-2.52,0,4.76,-2.52,0,4.76,-2.52,0,4.09,-2.71,0,4.32,-2.52,0,4.76,-2.71,0,4.32,-2.68,0,4.77,-2.65,-.05,4.74,-2.68,0,4.77,-2.71,0,4.32,-2.65,-.05,4.74,-2.71,0,4.32,-2.69,-.05,4.32,-1.52,-.05,3.25,-1.53,-.05,4.57,-2.5,-.05,4.74,-1.52,-.05,3.25,-2.5,-.05,4.74,-2.5,-.05,4.1,-1.5,0,3.21,-1.52,-.05,3.25,-2.5,-.05,4.1,-1.5,0,3.21,-2.5,-.05,4.1,-2.52,0,4.09,-2.52,0,4.76,-2.68,0,4.77,-2.65,-.05,4.74,-2.52,0,4.76,-2.65,-.05,4.74,-2.5,-.05,4.74,-1.14,-.05,4.41,-.75,-.2,4.15,-.93,0,4.07,-1.14,-.05,4.41,-.93,0,4.07,-1.11,0,4.42,-1.51,0,4.58,-1.53,-.05,4.57,-1.14,-.05,4.41,-1.51,0,4.58,-1.14,-.05,4.41,-1.11,0,4.42,-.93,0,4.07,-.94,0,2.9,-1.11,0,2.98,-.93,0,4.07,-1.11,0,2.98,-1.11,0,4.42,-.96,-.18,2.9,-.75,-.2,4.15,-1.14,-.05,4.41,-.96,-.18,2.9,-1.14,-.05,4.41,-1.14,-.05,3.02,-1.11,0,2.98,-.94,0,2.9,-.96,-.18,2.9,-1.11,0,2.98,-.96,-.18,2.9,-1.14,-.05,3.02]},normal:{itemSize:3,type:"Float32Array",array:[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,-.47,-.38,-.8,-.47,-.38,-.8,-.47,-.38,-.8,-.47,-.38,-.8,-.47,-.38,-.8,-.47,-.38,-.8,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,.16,-.3,.94,.16,-.3,.94,.16,-.3,.94,.16,-.3,.94,.16,-.3,.94,.16,-.3,.94,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,-.74,-.3,-.61,-.74,-.3,-.61,-.74,-.3,-.61,-.74,-.3,-.61,-.74,-.3,-.61,-.74,-.3,-.61,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,-.9,-.43,.07,-.9,-.43,.07,-.9,-.43,.07,-.9,-.43,.07,-.9,-.43,.07,-.9,-.43,.07,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,-.63,-.27,-.73,-.63,-.27,-.73,-.63,-.27,-.73,-.63,-.27,-.73,-.63,-.27,-.73,-.63,-.27,-.73,.05,-.33,.94,.05,-.33,.94,.05,-.33,.94,.05,-.33,.94,.05,-.33,.94,.05,-.33,.94,.56,.69,.46,.56,.69,.46,.56,.69,.46,.75,-.54,.39,.75,-.54,.39,.75,-.54,.39,.36,-.35,.86,.36,-.35,.86,.36,-.35,.86,.36,-.35,.86,.36,-.35,.86,.36,-.35,.86,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,-.33,-.94,.04,-.33,-.94,.04,-.33,-.94,.04,-.58,-.82,0,-.58,-.82,0,-.58,-.82,0,-.4,.03,-.91,-.4,.03,-.91,-.4,.03,-.91,-.64,-.22,-.74,-.64,-.22,-.74,-.64,-.22,-.74]}}}},{uuid:"94d9f0cc-6de3-45f2-8f1a-a956ae966bf3",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[0,.57,-3.3,-.4,.45,-2.51,0,.93,-2.53,-.27,.69,-1.47,0,.83,-1.41,0,.93,-2.53,-.27,.69,-1.47,0,.93,-2.53,-.4,.45,-2.51]},normal:{itemSize:3,type:"Float32Array",array:[-.74,.61,-.28,-.74,.61,-.28,-.74,.61,-.28,-.47,.88,.08,-.47,.88,.08,-.47,.88,.08,-.77,.64,-.05,-.77,.64,-.05,-.77,.64,-.05]}}}},{uuid:"543861e5-01f3-4a50-bf26-4bf58c47a563",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[-.53,-.23,3.99,-.53,.14,3.99,-.59,.21,3.3,-.53,-.23,3.99,-.59,.21,3.3,-.59,-.3,3.3,-.59,-.3,3.3,-.59,.21,3.3,-.07,.21,3.3,-.59,-.3,3.3,-.07,.21,3.3,-.07,-.3,3.3,-.07,-.3,3.3,-.07,.21,3.3,-.16,.14,3.99,-.07,-.3,3.3,-.16,.14,3.99,-.16,-.23,3.99,-.16,-.23,3.99,-.16,.14,3.99,-.53,.14,3.99,-.16,-.23,3.99,-.53,.14,3.99,-.53,-.23,3.99,-.59,-.3,3.3,-.07,-.3,3.3,-.16,-.23,3.99,-.59,-.3,3.3,-.16,-.23,3.99,-.53,-.23,3.99,-.07,.21,3.3,-.59,.21,3.3,-.53,.14,3.99,-.07,.21,3.3,-.53,.14,3.99,-.16,.14,3.99]},normal:{itemSize:3,type:"Float32Array",array:[-1,0,.08,-1,0,.08,-1,0,.08,-1,0,.08,-1,0,.08,-1,0,.08,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,.99,0,.13,.99,0,.13,.99,0,.13,.99,0,.13,.99,0,.13,.99,0,.13,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,-.99,.1,0,-.99,.1,0,-.99,.1,0,-.99,.1,0,-.99,.1,0,-.99,.1,0,.99,.1,0,.99,.1,0,.99,.1,0,.99,.1,0,.99,.1,0,.99,.1]}}}}],object:{uuid:"95b3ee55-491b-4822-a889-89838069fc61",type:"Group",children:[{uuid:"36e5f9df-ec8b-4f5d-9f4a-9eb2452e58cd",type:"Mesh",name:"1.top_fins",geometry:"d37fc80b-30fb-43f2-aded-9e6f62e8abac"},{uuid:"5eaabc9d-7a50-4f3c-9ba0-cdefe9b66aa7",type:"Mesh",name:"2.base",geometry:"881e533b-b4c4-4dac-b3dd-702e3cec9f9c"},{uuid:"b48254a9-2e12-4b5d-b256-ce8d79a5396c",type:"Mesh",name:"1.wings",geometry:"9282b601-44ed-4904-abb8-8b10ed2d16e3"},{uuid:"52907ef4-a119-4839-84e6-db8f7d0eeb89",type:"Mesh",name:"1.side_fins",geometry:"f4d8489b-c30b-4d16-9a18-3cc09579cb1d"},{uuid:"e8c6bcd1-f1ba-4d5b-9f66-4dfa2839ad35",type:"Mesh",name:"0.cockpit",geometry:"94d9f0cc-6de3-45f2-8f1a-a956ae966bf3"},{uuid:"1e4fb08c-9554-443d-9a56-b4fc8d9fa907",type:"Mesh",name:"0.engine",geometry:"543861e5-01f3-4a50-bf26-4bf58c47a563"}]}},fighter:{geometries:[{uuid:"f57c3b08-22be-47c3-ab45-355e6dd3342b",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[-.24,.75,.37,0,.83,.37,-.61,.33,.4,-.44,.49,.38,-.92,0,-.11,-.91,0,.13,-.76,.2,-.17,-.75,.19,.12,-.91,0,.13,-.75,.19,.12,-.61,.34,.03,-.44,.51,-.01,-.44,.51,-.01,-.24,.75,-.04,-.24,.75,-.04,0,.83,-.04,-.24,.75,-.04,-.24,.75,-.37,-.43,.53,-.32,-.44,.51,-.01,-.92,0,.46,-.75,.2,.43,0,.83,-.04,0,.83,-.39,-.44,.49,.38,-.24,.75,.37,-.24,.75,-.37,0,.83,-.39,-.43,.53,-.32,-.24,.75,-.37,-.62,.37,-.26,-.43,.53,-.32,-.92,0,-.11,-.76,.2,-.17,-.24,.75,-.72,0,.83,-.73,-.42,.57,-.68,-.24,.75,-.72,-.62,.37,-.57,-.42,.57,-.68,-.93,0,-.36,-.77,.18,-.44,-.24,.75,-.37,-.24,.75,-.72,-.42,.57,-.68,-.43,.53,-.32,-.77,.18,-.44,-.76,.2,-.17,0,.83,-.39,0,.83,-.73,-.93,0,-.36,-.92,0,-.11,-.24,.72,-1.13,0,.8,-1.13,-.42,.62,-1.08,-.24,.72,-1.13,-.66,.35,-.96,-.42,.62,-1.08,-.91,0,-.76,-.76,.18,-.87,-.42,.57,-.68,-.42,.62,-1.08,-.76,.18,-.87,-.77,.18,-.44,0,.83,-.73,0,.8,-1.13,-.24,.72,-1.13,-.24,.75,-.72,-.91,0,-.76,-.93,0,-.36,-.24,.82,-1.57,0,.9,-1.57,-.43,.65,-1.52,-.24,.82,-1.57,-.66,.31,-1.27,-.43,.65,-1.52,-.42,.62,-1.08,-.43,.65,-1.52,0,.8,-1.13,0,.9,-1.57,-.24,.82,-1.57,-.24,.72,-1.13,-.85,.03,-.99,-.91,0,-.76,-.25,.87,-2.08,0,.97,-2.09,-.42,.64,-1.99,-.25,.87,-2.08,-.6,.3,-1.86,-.42,.64,-1.99,-.24,.82,-1.57,-.25,.87,-2.08,-.42,.64,-1.99,-.43,.65,-1.52,0,.9,-1.57,0,.97,-2.09,-.73,-.01,-1.67,-.85,.03,-.99,-.24,.81,-2.59,0,.92,-2.6,-.4,.56,-2.56,-.24,.81,-2.59,-.55,.26,-2.45,-.4,.56,-2.56,-.66,0,-2.28,-.73,-.01,-1.67,-.25,.87,-2.08,-.24,.81,-2.59,-.4,.56,-2.56,-.42,.64,-1.99,0,.97,-2.09,0,.92,-2.6,-.21,.66,-2.98,0,.73,-2.99,-.39,.49,-2.93,-.21,.66,-2.98,-.5,.23,-2.88,-.39,.49,-2.93,-.6,-.01,-2.77,-.66,0,-2.28,-.24,.81,-2.59,-.21,.66,-2.98,-.39,.49,-2.93,-.4,.56,-2.56,0,.92,-2.6,0,.73,-2.99,-.19,.49,-3.37,0,.54,-3.38,-.34,.39,-3.36,-.19,.49,-3.37,-.46,.19,-3.28,-.34,.39,-3.36,-.54,-.01,-3.21,-.6,-.01,-2.77,-.21,.66,-2.98,-.19,.49,-3.37,-.34,.39,-3.36,-.39,.49,-2.93,0,.73,-2.99,0,.54,-3.38,-.17,.43,-3.7,0,.47,-3.72,-.3,.35,-3.7,-.17,.43,-3.7,-.42,.18,-3.66,-.3,.35,-3.7,-.49,-.02,-3.61,-.54,-.01,-3.21,-.19,.49,-3.37,-.17,.43,-3.7,-.3,.35,-3.7,-.34,.39,-3.36,0,.54,-3.38,0,.47,-3.72,-.13,.35,-4.16,0,.39,-4.17,-.23,.28,-4.13,-.13,.35,-4.16,-.34,.12,-4.11,-.23,.28,-4.13,0,.47,-3.72,0,.39,-4.17,-.13,.35,-4.16,-.17,.43,-3.7,-.39,-.04,-4.08,-.49,-.02,-3.61,-.23,.28,-4.13,-.3,.35,-3.7,-.1,.28,-4.56,0,.32,-4.56,-.17,.22,-4.55,-.1,.28,-4.56,-.25,.08,-4.54,-.17,.22,-4.55,-.23,.28,-4.13,-.17,.22,-4.55,0,.39,-4.17,0,.32,-4.56,-.1,.28,-4.56,-.13,.35,-4.16,-.31,-.07,-4.52,-.39,-.04,-4.08,-.07,.14,-4.95,0,.17,-4.95,-.12,.1,-4.94,-.07,.14,-4.95,-.18,0,-4.93,-.12,.1,-4.94,-.17,.22,-4.55,-.12,.1,-4.94,0,.32,-4.56,0,.17,-4.95,-.07,.14,-4.95,-.1,.28,-4.56,-.22,-.09,-4.91,-.31,-.07,-4.52,-.04,0,-5.27,0,.02,-5.27,-.07,-.03,-5.27,-.04,0,-5.27,-.12,.1,-4.94,-.07,-.03,-5.27,0,.17,-4.95,0,.02,-5.27,-.04,0,-5.27,-.07,.14,-4.95,-.08,-.08,-5.26,-.22,-.09,-4.91,-.44,.51,-.01,-.44,.49,.38,-.24,.75,.37,-.24,.75,-.04,-.91,0,.13,-.92,0,.46,-.75,.2,.43,-.75,.19,.12,0,.83,.37,0,.83,-.04,-.24,.71,.8,0,.8,.8,-.61,.33,.8,-.44,.49,.8,-.91,0,.8,-.75,.22,.8,-.44,.49,.8,-.24,.71,.8,-.75,.2,.43,-.75,.22,.8,-.44,.49,.8,-.44,.49,.38,-.24,.71,.8,-.24,.75,.37,-.92,0,.46,-.91,0,.8,0,.8,.8,0,.83,.37,-.24,.65,1.19,0,.73,1.19,-.61,.33,1.19,-.44,.48,1.19,-.91,0,1.19,-.75,.22,1.19,-.44,.48,1.19,-.24,.65,1.19,-.44,.49,.8,-.44,.48,1.19,-.24,.65,1.19,-.24,.71,.8,-.75,.22,.8,-.75,.22,1.19,-.91,0,.8,-.91,0,1.19,0,.73,1.19,0,.8,.8,-.24,.6,1.49,0,.68,1.49,-.61,.33,1.49,-.44,.48,1.49,-.91,0,1.49,-.75,.22,1.49,-.44,.48,1.49,-.24,.6,1.49,-.44,.48,1.19,-.44,.48,1.49,-.24,.6,1.49,-.24,.65,1.19,-.75,.22,1.19,-.75,.22,1.49,-.91,0,1.19,-.91,0,1.49,0,.68,1.49,0,.73,1.19,-.24,.58,1.8,0,.61,1.8,-.61,.32,1.8,-.44,.45,1.8,-.91,0,1.8,-.75,.22,1.8,-.44,.45,1.8,-.24,.58,1.8,-.44,.48,1.49,-.44,.45,1.8,-.24,.58,1.8,-.24,.6,1.49,-.75,.22,1.49,-.75,.22,1.8,-.91,0,1.49,-.91,0,1.8,0,.61,1.8,0,.68,1.49,-.24,.53,2.07,0,.57,2.07,-.66,.34,2.09,-.44,.4,2.07,-.81,.26,2.11,-.82,.28,2.38,-.44,.4,2.07,-.24,.53,2.07,-.24,.58,1.8,-.24,.53,2.07,0,.57,2.07,0,.61,1.8,-.44,.45,1.8,-.44,.4,2.07,-.75,.22,1.8,-.81,.26,2.11,-.91,0,1.8,-.91,0,2.07,-.24,.47,2.37,0,.54,2.37,-.44,.46,2.35,-.24,.47,2.37,-.66,.34,2.09,-.68,.36,2.37,-.24,.53,2.07,-.24,.47,2.37,0,.54,2.37,0,.57,2.07,-.44,.4,2.07,-.44,.46,2.35,-.23,.43,2.61,0,.5,2.61,-.62,.37,-.26,-.62,.37,-.57,-.6,.3,-1.86,-.55,.26,-2.45,-.62,.37,-.57,-.66,.35,-.96,-.62,.37,-.26,-.61,.34,.03,-.15,.19,4.29,-.11,0,4.3,-.24,.47,2.37,-.23,.43,2.61,0,.5,2.61,0,.54,2.37,-.66,.35,-.96,-.66,.31,-1.27,-.2,.41,2.85,0,.49,2.85,-.46,.19,-3.28,-.42,.18,-3.66,-.25,.08,-4.54,-.18,0,-4.93,-.42,.18,-3.66,-.34,.12,-4.11,-.5,.23,-2.88,-.46,.19,-3.28,-.55,.26,-2.45,-.5,.23,-2.88,-.23,.43,2.61,-.2,.41,2.85,0,.49,2.85,0,.5,2.61,-.66,.31,-1.27,-.6,.3,-1.86,-.19,.39,3.21,0,.47,3.21,-.61,.33,.4,-.61,.33,.8,-.61,.33,1.49,-.61,.32,1.8,-.61,.33,.8,-.61,.33,1.19,-.61,.34,.03,-.61,.33,.4,-.2,.41,2.85,-.19,.39,3.21,0,.47,3.21,0,.49,2.85,-.34,.12,-4.11,-.25,.08,-4.54,-.13,.39,3.57,0,.43,3.51,-.75,.22,1.8,-.61,.32,1.8,-.75,.22,.8,-.61,.33,.8,-.75,.22,1.49,-.61,.33,1.49,-.81,.26,2.11,-.66,.34,2.09,-.61,.32,1.8,-.66,.34,2.09,-.19,.39,3.21,-.13,.39,3.57,0,.43,3.51,0,.47,3.21,-.61,.33,1.19,-.61,.33,1.49,-.11,.29,3.84,0,.36,3.81,-.31,-.07,-4.52,-.25,.08,-4.54,-.54,-.01,-3.21,-.46,.19,-3.28,-.39,-.04,-4.08,-.34,.12,-4.11,-.75,.22,1.19,-.61,.33,1.19,-.22,-.09,-4.91,-.18,0,-4.93,-.13,.39,3.57,-.11,.29,3.84,0,.36,3.81,0,.43,3.51,-.08,.21,4.07,0,.26,4.07,-.73,-.01,-1.67,-.6,.3,-1.86,-.77,.18,-.44,-.62,.37,-.57,-.78,.15,-1.11,-.66,.31,-1.27,-.49,-.02,-3.61,-.42,.18,-3.66,-.08,.21,4.07,-.11,.29,3.84,-.6,-.01,-2.77,-.5,.23,-2.88,-.66,0,-2.28,-.55,.26,-2.45,0,.26,4.07,0,.36,3.81,-.06,.11,4.16,0,.21,4.2,-.76,.18,-.87,-.66,.35,-.96,-.06,.11,4.16,-.08,.21,4.07,-.76,.2,-.17,-.62,.37,-.26,-.75,.19,.12,-.61,.34,.03,0,.21,4.2,0,.26,4.07,-.06,.03,4.41,0,.05,4.39,-.11,0,4.3,-.16,-.04,4.54,-.09,-.06,4.4,-.06,.03,4.41,-.06,.11,4.16,-.06,.03,4.41,0,.05,4.39,0,.21,4.2,-.63,.27,4.54,-.46,.31,4.54,-.75,.16,4.54,-.63,.27,4.54,-.79,0,4.54,-.75,.16,4.54,-.32,.27,4.54,-.2,.16,4.54,-.46,.31,4.54,-.32,.27,4.54,-.66,.32,4.29,-.45,.37,4.29,-.8,.19,4.29,-.66,.32,4.29,-.85,0,4.29,-.8,.19,4.29,-.29,.32,4.29,-.15,.19,4.29,-.45,.37,4.29,-.29,.32,4.29,-.2,.16,4.54,-.15,.19,4.29,-.29,.32,4.29,-.32,.27,4.54,-.46,.31,4.54,-.45,.37,4.29,-.66,.32,4.29,-.63,.27,4.54,-.8,.19,4.29,-.75,.16,4.54,-.85,0,4.29,-.79,0,4.54,-.7,.39,4.07,-.45,.45,4.07,-.82,.25,4.09,-.7,.39,4.07,-.93,0,4.07,-.82,.25,4.09,-.45,.45,4.07,-.25,.39,4.07,-.8,.19,4.29,-.82,.25,4.09,-.93,0,4.07,-.85,0,4.29,-.2,.16,4.54,-.16,-.04,4.54,-.25,.39,4.07,-.29,.32,4.29,-.45,.37,4.29,-.45,.45,4.07,-.7,.39,4.07,-.66,.32,4.29,-.71,.4,3.65,-.45,.45,3.62,-.84,.29,3.64,-.71,.4,3.65,-.94,0,3.62,-.84,.29,3.64,-.45,.45,3.62,-.24,.4,3.62,-.84,.27,3.88,-.84,.29,3.64,-.93,0,3.86,-.93,0,4.07,-.25,.4,3.86,-.25,.39,4.07,-.45,.45,3.86,-.45,.45,3.62,-.7,.4,3.86,-.7,.39,4.07,-.71,.4,3.3,-.44,.45,3.25,-.87,.28,3.31,-.71,.4,3.3,-.95,0,3.33,-.87,.28,3.31,-.08,.21,4.07,-.15,.19,4.29,-.71,.4,3.65,-.71,.4,3.3,-.87,.28,3.31,-.84,.29,3.64,-.91,0,2.07,-.81,.26,2.11,-.95,0,3.33,-.94,0,3.62,-.24,.4,3.62,-.13,.39,3.57,-.45,.45,3.62,-.44,.45,3.25,-.71,.4,2.91,-.44,.46,2.85,-.87,.28,2.91,-.71,.4,2.91,-.94,0,2.9,-.87,.28,2.91,-.95,0,3.33,-.94,0,2.9,-.19,.39,3.21,-.24,.4,3.62,-.44,.45,3.25,-.44,.46,2.85,-.71,.4,2.91,-.71,.4,3.3,-.87,.28,2.91,-.87,.28,3.31,-.71,.4,2.61,-.45,.46,2.59,-.86,.29,2.62,-.71,.4,2.61,-.94,0,2.59,-.86,.29,2.62,-.91,0,2.07,-.93,0,2.35,-.94,0,2.9,-.94,0,2.59,-.44,.46,2.85,-.2,.41,2.85,-.44,.46,2.85,-.45,.46,2.59,-.71,.4,2.61,-.71,.4,2.91,-.86,.29,2.62,-.87,.28,2.91,-.44,.45,3.25,-.19,.39,3.21,-.68,.36,2.37,-.71,.4,2.61,-.82,.28,2.38,-.68,.36,2.37,-.93,0,2.35,-.82,.28,2.38,-.93,0,2.35,-.94,0,2.59,-.86,.29,2.62,-.82,.28,2.38,-.75,.2,.43,-.61,.33,.4,-.45,.46,2.59,-.23,.43,2.61,-.82,.25,4.09,-.84,.27,3.88,-.94,0,3.62,-.93,0,3.86,-.24,.4,3.62,-.25,.4,3.86,-.45,.45,4.07,-.45,.45,3.86,-.71,.4,3.65,-.7,.4,3.86,-.25,.39,4.07,-.08,.21,4.07,-.7,.4,3.86,-.84,.27,3.88,-.25,.4,3.86,-.45,.45,3.86,-.45,.45,3.86,-.7,.4,3.86,-.84,.27,3.88,-.93,0,3.86,-.11,0,4.3,-.06,.11,4.16,-.11,.29,3.84,-.25,.4,3.86,-.11,0,4.3,-.09,-.06,4.4,-.68,.36,2.37,-.44,.46,2.35,-.45,.46,2.59,-.44,.46,2.35,-1.12,0,.1,-1.12,0,.31,-1.11,0,-.13,-1.12,0,.1,-1.08,0,-.54,-1.11,0,-.13,-1.12,0,.31,-1.13,0,.62,-1.13,0,.62,-1.12,0,.93,-1.12,0,.93,-1.12,0,1.29,-1.12,0,1.29,-1.12,0,1.55,-1.12,0,1.55,-1.12,0,1.84,-1.12,0,1.84,-1.12,0,2.08,-1.12,0,2.08,-1.14,0,2.34,-.91,0,-.76,-1.08,0,-.54,-1.11,0,-.13,-.93,0,-.36,-.91,0,1.8,-1.12,0,1.84,-1.12,0,2.08,-.91,0,2.07,-.91,0,1.49,-1.12,0,1.55,-.92,0,.46,-1.13,0,.62,-1.12,0,.93,-.91,0,.8,-.91,0,.13,-1.12,0,.31,-1.12,0,.1,-.92,0,-.11,-.91,0,1.19,-1.12,0,1.29,-1.14,0,2.34,-.93,0,2.35,-1.51,0,.33,-1.51,0,.53,-1.5,0,.12,-1.51,0,.33,-1.48,0,-.21,-1.5,0,.12,-1.51,0,.53,-1.51,0,.8,-1.51,0,.8,-1.51,0,1.09,-1.51,0,1.09,-1.51,0,1.41,-1.51,0,1.41,-1.51,0,1.66,-1.51,0,1.66,-1.51,0,1.91,-1.51,0,1.91,-1.51,0,2.13,-1.51,0,2.13,-1.53,0,2.37,-1.12,0,2.08,-1.51,0,2.13,-1.53,0,2.37,-1.14,0,2.34,-1.12,0,1.29,-1.51,0,1.41,-1.51,0,1.66,-1.12,0,1.55,-1.12,0,.31,-1.51,0,.53,-1.51,0,.8,-1.13,0,.62,-1.12,0,.1,-1.51,0,.33,-1.51,0,1.91,-1.12,0,1.84,-1.51,0,1.09,-1.12,0,.93,-1.11,0,-.13,-1.5,0,.12,-1.08,0,-.54,-1.48,0,-.21,-1.92,0,.57,-1.92,0,.75,-1.91,0,.38,-1.92,0,.57,-1.89,0,.08,-1.91,0,.38,-1.92,0,.75,-1.93,0,1,-1.93,0,1,-1.92,0,1.25,-1.92,0,1.25,-1.92,0,1.55,-1.92,0,1.55,-1.92,0,1.77,-1.92,0,1.77,-1.92,0,2,-1.92,0,2,-1.92,0,2.2,-1.92,0,2.2,-1.94,0,2.42,-1.51,0,1.09,-1.92,0,1.25,-1.92,0,1.55,-1.51,0,1.41,-1.48,0,-.21,-1.89,0,.08,-1.91,0,.38,-1.5,0,.12,-1.51,0,2.13,-1.92,0,2.2,-1.94,0,2.42,-1.53,0,2.37,-1.92,0,1.77,-1.51,0,1.66,-1.51,0,.53,-1.92,0,.75,-1.93,0,1,-1.51,0,.8,-1.51,0,.33,-1.92,0,.57,-1.92,0,2,-1.51,0,1.91,-2.35,0,.85,-2.35,0,1,-2.34,0,.68,-2.35,0,.85,-2.33,0,.42,-2.34,0,.68,-2.35,0,1,-2.36,0,1.22,-2.36,0,1.22,-2.35,0,1.45,-2.35,0,1.45,-2.35,0,1.7,-2.35,0,1.7,-2.35,0,1.9,-2.35,0,1.9,-2.35,0,2.1,-2.35,0,2.1,-2.35,0,2.28,-2.35,0,2.28,-2.36,0,2.46,-1.91,0,.38,-2.34,0,.68,-2.35,0,.85,-1.92,0,.57,-1.92,0,2,-2.35,0,2.1,-2.35,0,2.28,-1.92,0,2.2,-1.92,0,1.25,-2.35,0,1.45,-2.35,0,1.7,-1.92,0,1.55,-1.89,0,.08,-2.33,0,.42,-2.36,0,2.46,-1.94,0,2.42,-2.35,0,1.9,-1.92,0,1.77,-1.92,0,.75,-2.35,0,1,-2.36,0,1.22,-1.93,0,1,-2.7,0,1.07,-2.7,0,1.21,-2.69,0,.92,-2.7,0,1.07,-2.67,0,.69,-2.69,0,.92,-2.7,0,1.21,-2.7,0,1.41,-2.7,0,1.41,-2.7,0,1.61,-2.7,0,1.61,-2.7,0,1.84,-2.7,0,1.84,-2.7,0,2.01,-2.7,0,2.01,-2.7,0,2.19,-2.7,0,2.19,-2.7,0,2.35,-2.7,0,2.35,-2.71,0,2.52,-2.36,0,1.22,-2.7,0,1.41,-2.7,0,1.61,-2.35,0,1.45,-2.34,0,.68,-2.69,0,.92,-2.7,0,1.07,-2.35,0,.85,-2.35,0,2.1,-2.7,0,2.19,-2.7,0,2.35,-2.35,0,2.28,-2.7,0,1.84,-2.35,0,1.7,-2.33,0,.42,-2.67,0,.69,-2.71,0,2.52,-2.36,0,2.46,-2.7,0,2.01,-2.35,0,1.9,-2.35,0,1,-2.7,0,1.21,-3.21,0,1.37,-3.21,0,1.48,-3.2,0,1.24,-3.21,0,1.37,-3.19,0,1.04,-3.2,0,1.24,-3.21,0,1.48,-3.22,0,1.65,-3.22,0,1.65,-3.21,0,1.82,-3.21,0,1.82,-3.21,0,2.02,-3.21,0,2.02,-3.21,0,2.17,-3.21,0,2.17,-3.21,0,2.32,-3.21,0,2.32,-3.21,0,2.46,-3.21,0,2.46,-3.22,0,2.6,-2.7,0,1.07,-3.21,0,1.37,-3.21,0,1.48,-2.7,0,1.21,-2.7,0,2.01,-3.21,0,2.17,-3.21,0,2.32,-2.7,0,2.19,-2.7,0,1.41,-3.22,0,1.65,-3.21,0,1.82,-2.7,0,1.61,-2.69,0,.92,-3.2,0,1.24,-3.21,0,2.46,-2.7,0,2.35,-3.21,0,2.02,-2.7,0,1.84,-2.67,0,.69,-3.19,0,1.04,-3.22,0,2.6,-2.71,0,2.52,-3.69,0,1.65,-3.69,0,1.74,-3.68,0,1.54,-3.69,0,1.65,-3.67,0,1.37,-3.68,0,1.54,-3.69,0,1.74,-3.69,0,1.88,-3.69,0,1.88,-3.69,0,2.03,-3.69,0,2.03,-3.69,0,2.19,-3.69,0,2.19,-3.69,0,2.31,-3.69,0,2.31,-3.69,0,2.44,-3.69,0,2.44,-3.69,0,2.55,-3.69,0,2.55,-3.7,0,2.67,-3.21,0,2.02,-3.69,0,2.19,-3.69,0,2.31,-3.21,0,2.17,-3.21,0,1.48,-3.69,0,1.74,-3.69,0,1.88,-3.22,0,1.65,-3.21,0,1.37,-3.69,0,1.65,-3.69,0,2.44,-3.21,0,2.32,-3.69,0,2.03,-3.21,0,1.82,-3.2,0,1.24,-3.68,0,1.54,-3.69,0,2.55,-3.21,0,2.46,-3.19,0,1.04,-3.67,0,1.37,-3.7,0,2.67,-3.22,0,2.6,-4.08,0,1.88,-4.09,0,1.96,-4.08,0,1.79,-4.08,0,1.88,-4.07,0,1.65,-4.08,0,1.79,-4.09,0,1.96,-4.09,0,2.08,-4.09,0,2.08,-4.09,0,2.2,-4.09,0,2.2,-4.09,0,2.34,-4.09,0,2.34,-4.09,0,2.44,-4.09,0,2.44,-4.09,0,2.55,-4.09,0,2.55,-4.09,0,2.64,-4.09,0,2.64,-4.09,0,2.74,-3.67,0,1.37,-4.07,0,1.65,-4.08,0,1.79,-3.68,0,1.54,-3.69,0,2.55,-4.09,0,2.64,-4.09,0,2.74,-3.7,0,2.67,-3.69,0,2.19,-4.09,0,2.34,-4.09,0,2.44,-3.69,0,2.31,-3.69,0,1.74,-4.09,0,1.96,-4.09,0,2.08,-3.69,0,1.88,-3.69,0,1.65,-4.08,0,1.88,-4.09,0,2.55,-3.69,0,2.44,-4.09,0,2.2,-3.69,0,2.03,-4.31,0,2.05,-4.31,0,2.12,-4.31,0,1.98,-4.31,0,2.05,-4.29,0,1.87,-4.31,0,1.98,-4.31,0,2.12,-4.32,0,2.22,-4.32,0,2.22,-4.31,0,2.32,-4.31,0,2.32,-4.31,0,2.44,-4.31,0,2.44,-4.31,0,2.52,-4.31,0,2.52,-4.31,0,2.61,-4.31,0,2.61,-4.31,0,2.69,-4.31,0,2.69,-4.27,0,2.74,-4.09,0,2.2,-4.31,0,2.32,-4.31,0,2.44,-4.09,0,2.34,-4.07,0,1.65,-4.29,0,1.87,-4.31,0,1.98,-4.08,0,1.79,-4.09,0,2.64,-4.31,0,2.69,-4.27,0,2.74,-4.09,0,2.74,-4.31,0,2.52,-4.09,0,2.44,-4.09,0,1.96,-4.31,0,2.12,-4.32,0,2.22,-4.09,0,2.08,-4.08,0,1.88,-4.31,0,2.05,-4.31,0,2.61,-4.09,0,2.55,-1.11,0,4.21,-1.11,0,4.42,-1.12,0,3.47,-1.12,0,3.97,-1.12,0,3.47,-1.11,0,2.98,-1.12,0,3.97,-1.11,0,4.21,-.94,0,3.62,-1.12,0,3.97,-1.11,0,4.21,-.93,0,3.86,-.94,0,2.9,-1.11,0,2.98,-1.12,0,3.47,-.95,0,3.33,-1.11,0,4.42,-.93,0,4.07,-1.51,0,4.38,-1.51,0,4.58,-1.51,0,3.72,-1.52,0,4.14,-1.51,0,3.72,-1.5,0,3.21,-1.52,0,4.14,-1.51,0,4.38,-1.11,0,2.98,-1.5,0,3.21,-1.51,0,3.72,-1.12,0,3.47,-1.11,0,4.21,-1.51,0,4.38,-1.51,0,4.58,-1.11,0,4.42,-1.12,0,3.97,-1.52,0,4.14,-1.86,0,4.48,-1.86,0,4.65,-1.86,0,3.94,-1.86,0,4.28,-1.86,0,3.94,-1.86,0,3.52,-1.86,0,4.28,-1.86,0,4.48,-1.5,0,3.21,-1.86,0,3.52,-1.86,0,3.94,-1.51,0,3.72,-1.51,0,4.38,-1.86,0,4.48,-1.86,0,4.65,-1.51,0,4.58,-1.52,0,4.14,-1.86,0,4.28,-2.2,0,4.58,-2.2,0,4.72,-2.21,0,4.14,-2.21,0,4.42,-2.21,0,4.14,-2.2,0,3.82,-2.21,0,4.42,-2.2,0,4.58,-1.86,0,3.94,-2.21,0,4.14,-2.21,0,4.42,-1.86,0,4.28,-1.86,0,3.52,-2.2,0,3.82,-1.86,0,4.48,-2.2,0,4.58,-2.2,0,4.72,-1.86,0,4.65,-2.52,0,4.66,-2.52,0,4.76,-2.53,0,4.34,-2.52,0,4.55,-2.53,0,4.34,-2.52,0,4.09,-2.52,0,4.55,-2.52,0,4.66,-2.21,0,4.42,-2.52,0,4.55,-2.52,0,4.66,-2.2,0,4.58,-2.21,0,4.14,-2.53,0,4.34,-2.2,0,3.82,-2.52,0,4.09,-2.52,0,4.76,-2.2,0,4.72,-2.71,0,4.67,-2.68,0,4.77,-2.73,0,4.51,-2.72,0,4.6,-2.73,0,4.51,-2.71,0,4.32,-2.72,0,4.6,-2.71,0,4.67,-2.52,0,4.55,-2.72,0,4.6,-2.71,0,4.67,-2.52,0,4.66,-2.53,0,4.34,-2.73,0,4.51,-2.52,0,4.09,-2.71,0,4.32,-2.68,0,4.77,-2.52,0,4.76,-.81,.63,2.14,-.81,.63,2.45,-.81,.63,3.71,-.81,.63,3.36,-.81,.63,2.98,-.81,.63,3.36,-.81,.63,2.71,-.81,.63,2.98,-.81,.63,2.45,-.81,.63,2.71,-.71,.4,2.61,-.81,.63,2.71,-.81,.63,2.45,-.68,.36,2.37,-.81,.63,2.14,-.66,.34,2.09,-.71,.4,3.3,-.81,.63,3.36,-.81,.63,3.71,-.71,.4,3.65,-.81,.63,2.98,-.71,.4,2.91,-.96,.88,2.4,-.96,.89,2.67,-.96,.89,3.8,-.96,.89,3.48,-.96,.89,3.17,-.96,.89,3.48,-.96,.89,2.9,-.96,.89,3.17,-.96,.89,2.67,-.96,.89,2.9,-.81,.63,2.98,-.96,.89,3.17,-.96,.89,2.9,-.81,.63,2.71,-.81,.63,3.36,-.96,.89,3.48,-.96,.89,3.8,-.81,.63,3.71,-.96,.89,2.67,-.81,.63,2.45,-.96,.88,2.4,-.81,.63,2.14,-1.13,1.19,2.76,-1.13,1.2,2.97,-1.13,1.2,3.93,-1.13,1.2,3.64,-1.13,1.2,3.4,-1.13,1.2,3.64,-1.13,1.2,3.18,-1.13,1.2,3.4,-1.13,1.2,2.97,-1.13,1.2,3.18,-.96,.89,3.17,-1.13,1.2,3.4,-1.13,1.2,3.18,-.96,.89,2.9,-.96,.89,3.48,-1.13,1.2,3.64,-1.13,1.2,3.93,-.96,.89,3.8,-1.13,1.2,2.97,-.96,.89,2.67,-1.13,1.19,2.76,-.96,.88,2.4,-1.28,1.47,3.09,-1.28,1.47,3.26,-1.28,1.47,4.04,-1.28,1.47,3.82,-1.28,1.47,3.61,-1.28,1.47,3.82,-1.28,1.47,3.43,-1.28,1.47,3.61,-1.28,1.47,3.26,-1.28,1.47,3.43,-1.13,1.2,3.4,-1.28,1.47,3.61,-1.28,1.47,3.43,-1.13,1.2,3.18,-1.13,1.2,3.64,-1.28,1.47,3.82,-1.28,1.47,4.04,-1.13,1.2,3.93,-1.28,1.47,3.26,-1.13,1.2,2.97,-1.28,1.47,3.09,-1.13,1.19,2.76,-1.45,1.78,3.46,-1.45,1.78,3.58,-1.45,1.78,4.12,-1.45,1.78,3.97,-1.45,1.78,3.83,-1.45,1.78,3.97,-1.45,1.78,3.69,-1.45,1.78,3.83,-1.45,1.78,3.58,-1.45,1.78,3.69,-1.28,1.47,3.26,-1.45,1.78,3.58,-1.45,1.78,3.46,-1.28,1.47,3.09,-1.28,1.47,3.61,-1.45,1.78,3.83,-1.45,1.78,3.69,-1.28,1.47,3.43,-1.28,1.47,3.82,-1.45,1.78,3.97,-1.45,1.78,4.12,-1.28,1.47,4.04,-.61,.32,1.8,-.81,.63,2.14,-.93,-.18,-.11,-.92,0,-.11,-.9,-.14,-.77,-.91,0,-.76,-.93,-.18,.46,-.92,0,.46,-.93,-.18,1.49,-.91,0,1.49,-.95,-.18,2.59,-.94,0,2.59,-.8,-.13,4.54,-.79,0,4.54,-.97,-.18,3.33,-.95,0,3.33,-.93,-.18,2.07,-.91,0,2.07,-.93,-.18,1.19,-.91,0,1.19,-.96,-.18,2.9,-.94,0,2.9,-.22,-.21,4.54,-.5,-.27,4.54,-.09,-.18,4.47,-.22,-.21,4.54,-.45,-.03,4.42,-.66,-.1,4.42,-.09,-.06,4.4,-.09,-.18,4.47,-.16,-.04,4.54,-.22,-.21,4.54,-.09,-.06,4.4,-.16,-.04,4.54,-.56,.16,4.42,-.47,.19,4.42,-.63,.1,4.42,-.56,.16,4.42,-.65,-.01,4.42,-.63,.1,4.42,-.39,.16,4.42,-.32,.1,4.42,-.47,.19,4.42,-.39,.16,4.42,-.32,.1,4.42,-.3,0,4.42,-.66,-.1,4.42,-.65,-.01,4.42,-.34,-.14,4.42,-.5,-.17,4.42,-.3,0,4.42,-.34,-.14,4.42,-.63,.27,4.54,-.56,.16,4.42,-.47,.19,4.42,-.46,.31,4.54,-.16,-.04,4.54,-.3,0,4.42,-.34,-.14,4.42,-.22,-.21,4.54,-.39,.16,4.42,-.32,.27,4.54,-.75,.16,4.54,-.63,.1,4.42,-.2,.16,4.54,-.32,.1,4.42,-.5,-.27,4.54,-.5,-.17,4.42,-.65,-.01,4.42,-.79,0,4.54,-.06,-.03,4.53,0,-.01,4.53,-.07,-.07,4.53,-.06,-.03,4.53,0,-.19,4.53,-.08,-.14,4.53,-.07,-.07,4.53,-.08,-.14,4.53,-.09,-.06,4.4,-.07,-.07,4.53,-.06,-.03,4.53,-.06,.03,4.41,0,-.01,4.53,0,.05,4.39,-.08,-.14,4.53,-.09,-.18,4.47,0,.02,-5.27,0,-.08,-5.39,0,-.08,-5.39,-.08,-.08,-5.26,-.18,0,-4.93,-.07,-.03,-5.27,0,-.08,-5.39,-.04,0,-5.27,0,-.08,-5.39,-.07,-.03,-5.27,0,-.19,4.53,0,-.07,4.5,-.06,-.03,4.53,0,-.07,4.5,0,-.07,4.5,0,-.01,4.53,0,-.07,4.5,-.07,-.07,4.53,0,-.07,4.5,-.08,-.14,4.53,-.45,-.03,4.42,-.3,0,4.42,-.56,.16,4.42,-.45,-.03,4.42,-.45,-.03,4.42,-.47,.19,4.42,-.45,-.03,4.42,-.5,-.17,4.42,-.45,-.03,4.42,-.39,.16,4.42,-.63,.1,4.42,-.45,-.03,4.42,-.34,-.14,4.42,-.45,-.03,4.42,-.32,.1,4.42,-.45,-.03,4.42,-.65,-.01,4.42,-.45,-.03,4.42,-.91,0,.13,-.93,-.18,.13,-.85,.03,-.99,-.87,-.1,-.98,-.91,0,.8,-.93,-.18,.8,-.91,0,1.8,-.93,-.18,1.8,-.93,0,2.35,-.95,-.18,2.35,-.73,-.01,-1.67,-.87,-.1,-.98,-.85,0,4.29,-.86,-.18,4.29,-.5,-.27,4.54,-.8,-.13,4.54,-.94,0,3.62,-.95,-.18,3.62,-.93,0,-.36,-.94,-.18,-.36,-.93,0,3.86,-.95,-.18,3.86,-.93,0,4.07,-.94,-.18,4.07,-.5,-.17,4.42,-.66,-.1,4.42,-.8,-.13,4.54,-.66,-.1,4.42,-.93,-.18,1.8,-.93,-.18,2.07,-.96,-.18,2.9,-.97,-.18,3.33,-.94,-.18,4.07,-.86,-.18,4.29,-.93,-.18,.8,-.93,-.18,1.19,-.94,-.18,-.36,-.93,-.18,-.11,-.95,-.18,3.86,-.94,-.18,4.07,-.95,-.18,3.62,-.95,-.18,3.86,-.95,-.18,2.59,-.96,-.18,2.9,-.93,-.18,1.19,-.93,-.18,1.49,-.9,-.14,-.77,-.94,-.18,-.36,-.93,-.18,2.07,-.95,-.18,2.35,-.97,-.18,3.33,-.95,-.18,3.62,-.93,-.18,.13,-.93,-.18,.46,-.86,-.18,4.29,-.8,-.13,4.54,-.95,-.18,2.35,-.95,-.18,2.59,-.93,-.18,1.49,-.93,-.18,1.8,-.93,-.18,.46,-.93,-.18,.8,-.87,-.1,-.98,-.9,-.14,-.77,-.93,-.18,-.11,-.93,-.18,.13,-.08,-.08,-5.26,-.07,-.03,-5.27,0,-.19,4.53,0,-.21,4.28,-.09,-.18,4.47,0,-.21,4.28,-.85,.03,-.99,-.78,.15,-1.11,-.76,.18,-.87,-.78,.15,-1.11,-.78,.15,-1.11,-.73,-.01,-1.67]}}}},{uuid:"c0d506ca-a9cb-4803-ac44-3bbf439b331d",type:"BufferGeometry",data:{attributes:{position:{itemSize:3,type:"Float32Array",array:[-.64,-.36,-.11,-.64,-.36,.13,-.65,-.36,-.36,-.64,-.36,-.11,-.7,-.34,-.72,-.65,-.36,-.36,-.7,-.29,-.96,-.7,-.34,-.72,-.63,-.28,-1.62,-.7,-.29,-.96,-.56,-.26,-2.25,-.63,-.28,-1.62,-.5,-.25,-2.73,-.56,-.26,-2.25,-.46,-.23,-3.21,-.5,-.25,-2.73,-.41,-.22,-3.61,-.46,-.23,-3.21,-.31,-.21,-4.11,-.41,-.22,-3.61,-.22,-.19,-4.54,-.31,-.21,-4.11,-.15,-.16,-4.94,-.22,-.19,-4.54,-.05,-.12,-5.26,-.15,-.16,-4.94,-.64,-.36,.13,-.64,-.36,.46,-.64,-.36,.46,-.64,-.36,.8,-.64,-.36,.8,-.64,-.36,1.19,-.64,-.36,1.19,-.64,-.36,1.5,-.64,-.36,1.5,-.64,-.36,1.8,-.64,-.36,1.8,-.64,-.36,2.07,-.64,-.36,4.07,-.56,-.35,4.29,-.65,-.36,3.87,-.64,-.36,4.07,-.67,-.36,3.33,-.66,-.36,3.62,-.67,-.36,3.33,-.66,-.36,2.9,-.64,-.36,2.07,-.65,-.36,2.35,-.66,-.36,2.9,-.66,-.36,2.59,-.65,-.36,2.35,-.66,-.36,2.59,-.66,-.36,3.62,-.65,-.36,3.87,-.37,-.39,-.11,-.36,-.39,.13,-.37,-.39,-.36,-.37,-.39,-.11,-.35,-.39,-.72,-.37,-.39,-.36,-.32,-.38,-.96,-.35,-.39,-.72,-.28,-.37,-1.57,-.32,-.38,-.96,-.26,-.35,-2.26,-.28,-.37,-1.57,-.24,-.33,-2.72,-.26,-.35,-2.26,-.22,-.32,-3.22,-.24,-.33,-2.72,-.19,-.31,-3.61,-.22,-.32,-3.22,-.14,-.29,-4.15,-.19,-.31,-3.61,-.1,-.26,-4.55,-.14,-.29,-4.15,-.07,-.2,-4.94,-.1,-.26,-4.55,-.36,-.39,.13,-.37,-.39,.46,-.37,-.39,.46,-.36,-.39,.8,-.36,-.39,.8,-.36,-.39,1.19,-.36,-.39,1.19,-.36,-.39,1.5,-.36,-.39,1.5,-.36,-.39,1.8,-.36,-.39,1.8,-.36,-.39,2.07,-.33,-.39,4.07,-.26,-.29,4.29,-.36,-.39,3.87,-.33,-.39,4.07,-.39,-.4,3.33,-.38,-.39,3.62,-.39,-.4,3.33,-.38,-.39,2.9,-.36,-.39,2.07,-.38,-.39,2.35,-.38,-.39,2.9,-.38,-.39,2.59,-.38,-.39,2.35,-.38,-.39,2.59,-.38,-.39,3.62,-.36,-.39,3.87,-.64,-.36,1.5,-.36,-.39,1.5,-.36,-.39,1.19,-.64,-.36,1.19,-.46,-.23,-3.21,-.22,-.32,-3.22,-.19,-.31,-3.61,-.41,-.22,-3.61,-.66,-.36,2.59,-.38,-.39,2.59,-.38,-.39,2.9,-.66,-.36,2.9,-.64,-.36,-.11,-.37,-.39,-.11,-.37,-.39,-.36,-.65,-.36,-.36,-.07,-.2,-4.94,-.15,-.16,-4.94,-.64,-.36,1.8,-.36,-.39,1.8,-.14,-.29,-4.15,-.31,-.21,-4.11,-.38,-.39,2.35,-.65,-.36,2.35,-.35,-.39,-.72,-.7,-.34,-.72,-.64,-.36,2.07,-.36,-.39,2.07,-.1,-.26,-4.55,-.22,-.19,-4.54,-.65,-.36,3.87,-.36,-.39,3.87,-.38,-.39,3.62,-.66,-.36,3.62,-.32,-.38,-.96,-.7,-.29,-.96,-.56,-.35,4.29,-.26,-.29,4.29,-.33,-.39,4.07,-.64,-.36,4.07,-.28,-.37,-1.57,-.63,-.28,-1.62,-.64,-.36,.46,-.37,-.39,.46,-.36,-.39,.13,-.64,-.36,.13,-.26,-.35,-2.26,-.56,-.26,-2.25,-.39,-.4,3.33,-.67,-.36,3.33,-.64,-.36,.8,-.36,-.39,.8,-.24,-.33,-2.72,-.5,-.25,-2.73,0,-.39,-.11,0,-.39,.13,0,-.39,-.36,0,-.39,-.11,0,-.39,-.72,0,-.39,-.36,0,-.39,-.96,0,-.39,-.72,0,-.38,-1.57,0,-.39,-.96,0,-.36,-2.25,0,-.38,-1.57,0,-.35,-2.73,0,-.36,-2.25,0,-.34,-3.22,0,-.35,-2.73,0,-.33,-3.61,0,-.34,-3.22,0,-.3,-4.17,0,-.33,-3.61,0,-.28,-4.56,0,-.3,-4.17,0,-.22,-4.95,0,-.28,-4.56,0,-.39,.13,0,-.39,.46,0,-.39,.46,0,-.39,.8,0,-.39,.8,0,-.38,1.19,0,-.38,1.19,0,-.37,1.5,0,-.37,1.5,0,-.36,1.8,0,-.36,1.8,0,-.35,2.07,0,-.25,4.08,0,-.21,4.28,0,-.29,3.87,0,-.25,4.08,0,-.31,3.33,0,-.3,3.62,0,-.31,3.33,0,-.3,2.9,0,-.35,2.07,0,-.32,2.35,0,-.3,2.9,0,-.3,2.59,0,-.32,2.35,0,-.3,2.59,0,-.3,3.62,0,-.29,3.87,-.14,-.29,-4.15,0,-.3,-4.17,0,-.28,-4.56,-.1,-.26,-4.55,-.36,-.39,3.87,0,-.29,3.87,0,-.3,3.62,-.38,-.39,3.62,-.35,-.39,-.72,0,-.39,-.72,0,-.39,-.96,-.32,-.38,-.96,-.26,-.29,4.29,0,-.21,4.28,0,-.25,4.08,-.33,-.39,4.07,0,-.22,-4.95,-.07,-.2,-4.94,0,-.22,-4.95,0,-.15,-5.27,0,-.38,-1.57,-.28,-.37,-1.57,-.37,-.39,.46,0,-.39,.46,0,-.39,.13,-.36,-.39,.13,0,-.36,-2.25,-.26,-.35,-2.26,0,-.31,3.33,-.39,-.4,3.33,-.36,-.39,.8,0,-.39,.8,0,-.35,-2.73,-.24,-.33,-2.72,-.38,-.39,2.9,0,-.3,2.9,-.36,-.39,1.19,0,-.38,1.19,0,-.34,-3.22,-.22,-.32,-3.22,-.38,-.39,2.35,0,-.32,2.35,0,-.35,2.07,-.36,-.39,2.07,0,-.39,-.11,-.37,-.39,-.11,-.36,-.39,1.5,0,-.37,1.5,0,-.33,-3.61,-.19,-.31,-3.61,-.38,-.39,2.59,0,-.3,2.59,0,-.39,-.36,-.37,-.39,-.36,-.36,-.39,1.8,0,-.36,1.8,-.07,-.2,-4.94,-.05,-.12,-5.26,-.05,-.12,-5.26,0,-.15,-5.27,0,-.15,-5.27,0,-.08,-5.39,-.64,-.36,-.11,-.93,-.18,-.11,-.63,-.28,-1.62,-.73,-.01,-1.67,-.64,-.36,.46,-.93,-.18,.46,-.64,-.36,1.5,-.93,-.18,1.49,-.64,-.36,2.07,-.93,-.18,2.07,-.94,-.18,4.07,-.64,-.36,4.07,-.67,-.36,3.33,-.97,-.18,3.33,-.7,-.34,-.72,-.9,-.14,-.77,-.95,-.18,3.62,-.66,-.36,3.62,-.95,-.18,3.86,-.65,-.36,3.87,-.94,-.18,-.36,-.65,-.36,-.36,-.22,-.19,-4.54,-.31,-.07,-4.52,-.39,-.04,-4.08,-.31,-.21,-4.11,-.87,-.1,-.98,-.7,-.29,-.96,-.93,-.18,.13,-.64,-.36,.13,-.64,-.36,1.19,-.93,-.18,1.19,-.95,-.18,2.35,-.65,-.36,2.35,-.41,-.22,-3.61,-.49,-.02,-3.61,-.66,-.36,2.9,-.96,-.18,2.9,-.93,-.18,1.8,-.64,-.36,1.8,-.93,-.18,.8,-.64,-.36,.8,-.15,-.16,-4.94,-.22,-.09,-4.91,-.66,-.36,2.59,-.95,-.18,2.59,-.46,-.23,-3.21,-.54,-.01,-3.21,-.5,-.25,-2.73,-.6,-.01,-2.77,-.66,0,-2.28,-.56,-.26,-2.25,-.86,-.18,4.29,-.56,-.35,4.29,-.08,-.08,-5.26,-.05,-.12,-5.26,-.56,-.35,4.29,-.5,-.27,4.54]}}}}],object:{uuid:"8889613f-ef20-434f-b0f3-dda87ab036da",type:"Group",children:[{uuid:"459e6820-50d3-40db-993d-a137e3617f1d",type:"LineSegments",name:"fighter.top",geometry:"f57c3b08-22be-47c3-ab45-355e6dd3342b"},{uuid:"ad6227f5-6871-4e5c-a1da-95f89b1f046a",type:"LineSegments",name:"fighter.bottom",geometry:"c0d506ca-a9cb-4803-ac44-3bbf439b331d"}]}}};
+
+const CONFIG = {
+  VIEW: {
+    FOV: 75,
+    NEAR: 0.1,
+    FAR: 1001,
+    ASPECT_RATIO: 4 / 5,
+    POSITION: [0, 15, 0],
+    MAX_POLAR_ANGLE_OFFSET: Math.PI / 36, // 5° from vertical
+  },
+  COLORS: {
+    BLACK: 0x000000,
+    WHITE: 0xffffff,
+    CRITICAL: 0xff0000,
+  },
+  DAMAGE: {
+    // Probabilities for [ 1,  2,  3,  4, 5] (percentages)
+    LEVEL_PROBABILITIES: [40, 27, 18, 10, 5],
+    THRESHOLD: 1248,
+    SCALE: 3,
+    DEFORM_STRENGTH: 0.069,
+    DEFORM_RADIUS: 0.27,
+    HOLE_RADIUS: 0.19,
+    CRITICAL_CHANCE: 0.3,
+    WEAK_HIT_CHANCE: 0.3,
+    WEAK_HIT_STRENGTH: 1,
+    HOLE_LEVEL_THRESHOLD: 5,
+    DEFORM_Y_MULTIPLIER: 2,
+  },
+  BULLET_GRID: {
+    PADDING: 0.2,
+    COLS: 20,
+    ROWS: 25,
+    SPACING_VARIANCE: 0.09,
+  },
+  BULLET: {
+    ROTATION_VARIANCE: [-0.25, 0.25],
+    SIZE_VARIANCE: [0.04, 0.05],
+    POSITION_VARIANCE: [-0.01, 0.01],
+    RADIUS: 0.12,
+    Y_VARIANCE: [-0.02, 0.02],
+    NUM_SPHERES: 4,
+    SPHERE_SEGMENTS: 9,
+    CYLINDER_SEGMENTS: 6,
+    HIT_RADIUS: [0.15, 0.2],
+    HIT_SIZE_VARIANCE: [0.03, 0.07],
+  },
+  COLLISION: {
+    HIT_RADIUS: 0.2,
+    NUM_RAYS: 5,
+    CRITICAL_HIT_NAMES: ['0.cockpit', '0.engine'],
+  },
+  FIGHTER: {
+    LINE_WIDTH: 0.03,
+    BOTTOM_OPACITY_THRESHOLD: Math.PI / 4,
+  },
+  METADATA: {
+    LUCK_THRESHOLDS: {
+      LOW_ACCURACY: 0.2,
+      HIGH_ACCURACY: 0.3,
+      LOW_DAMAGE_PER_HIT: 12,
+      CLOSE_CALL_BULLETS: 10,
+      LOW_HIT_NUMBER: 35,
+    },
+  },
+  PREMINT_HASH: `0x0000000000000000000000000000000000000000000000000000000000000000`,
+}
+
+class Bullet {
+  constructor(artifact) {
+    this.artifact = artifact
+    this.random = artifact.random
+    this.materials = artifact.materials
+
+    this.material = this.materials.bullet
+
+    this.#generateDamage()
+    this.#initGeometry()
+  }
+
+  #generateDamage() {
+    const { LEVEL_PROBABILITIES } = CONFIG.DAMAGE
+    const totalWeight = LEVEL_PROBABILITIES.reduce((a, b) => a + b, 0)
+    let r = this.random.random_num(0, totalWeight)
+
+    this.damage = LEVEL_PROBABILITIES.findIndex((weight) => (r -= weight) <= 0) + 1
+  }
+
+  #initGeometry() {
+    this.mesh = new THREE.Group()
+    this.mesh.rotation.y = this.random.random_num(...CONFIG.BULLET.ROTATION_VARIANCE)
+
+    this.spheres = []
+    this.spherePositions = []
+    this.sphereRadii = []
+
+    for (let i = 0; i < CONFIG.BULLET.NUM_SPHERES; i++) {
+      const ballRadius = this.random.random_num(...CONFIG.BULLET.SIZE_VARIANCE)
+      this.sphereRadii.push(ballRadius)
+
+      const smallBallGeometry = new THREE.SphereGeometry(
+        ballRadius,
+        CONFIG.BULLET.SPHERE_SEGMENTS,
+        CONFIG.BULLET.SPHERE_SEGMENTS
+      )
+      const ball = new THREE.Mesh(smallBallGeometry, this.material)
+
+      const angle =
+        (i * Math.PI) / 2 +
+        Math.PI / 2 +
+        this.random.random_num(...CONFIG.BULLET.POSITION_VARIANCE)
+
+      ball.position.copy(
+        new THREE.Vector3(
+          Math.cos(angle) * CONFIG.BULLET.RADIUS,
+          this.random.random_num(...CONFIG.BULLET.Y_VARIANCE),
+          Math.sin(angle) * CONFIG.BULLET.RADIUS
+        )
+      )
+
+      this.spherePositions.push(ball.position)
+      this.spheres.push(ball)
+      this.mesh.add(ball)
+    }
+
+    this.artifact.scene.add(this.mesh)
+  }
+
+  hit(hitPoint, critical = false) {
+    // Update geometry
+    this.#snapTo(hitPoint)
+    this.#updateMaterial(critical)
+    this.#enlarge()
+    this.#drawCross()
+
+    // Update state
+    this.#calculateDamage(critical)
+    this.#applyDamageToFighter()
+  }
+
+  #calculateDamage(critical) {
+    let d = Math.pow(this.damage, CONFIG.DAMAGE.SCALE)
+
+    if (critical) {
+      d = CONFIG.DAMAGE.THRESHOLD
+    } else if (this.random.random_bool(CONFIG.DAMAGE.WEAK_HIT_CHANCE)) {
+      d = CONFIG.DAMAGE.WEAK_HIT_STRENGTH
+    }
+
+    this.artifact.state.damage += parseInt(d)
+    this.artifact.state.hits++
+
+    if (critical) {
+      this.artifact.state.criticalHits++
+    }
+  }
+
+  #applyDamageToFighter() {
+    if (!this.mesh.position) {
+      console.warn('bullet not initialized correctly', this)
+      return
+    }
+
+    this.artifact.fighterWireframe.deform(this.mesh.position, this.damage)
+  }
+
+  #snapTo(point) {
+    this.mesh.position.x = point.x
+    this.mesh.position.y = point.y
+    this.mesh.position.z = point.z
+  }
+
+  #updateMaterial(critical) {
+    this.material = critical ? this.materials.bulletCritical : this.materials.bullet
+  }
+
+  #enlarge() {
+    this.spheres.forEach((sphere, i) => {
+      sphere.material = this.material
+
+      const newRadius = this.random.random_num(...CONFIG.BULLET.HIT_SIZE_VARIANCE)
+      const originalRadius = this.sphereRadii[i]
+      sphere.scale.setScalar(newRadius / originalRadius)
+
+      this.sphereRadii[i] = newRadius
+
+      const angle =
+        i % 2 === 0
+          ? Math.floor(i / 2) * Math.PI + Math.PI / 2
+          : Math.floor(i / 2) * Math.PI + Math.PI / 2 + Math.PI / 2
+
+      const radius = this.random.random_num(...CONFIG.BULLET.HIT_RADIUS)
+
+      const position = new THREE.Vector3(
+        Math.cos(angle) * radius,
+        sphere.position.y,
+        Math.sin(angle) * radius
+      )
+
+      sphere.position.copy(position)
+      this.spherePositions[i] = position
+    })
+  }
+
+  #drawCross() {
+    this.mesh.rotation.y -= Math.PI / 4
+
+    const diagonalLength1 = this.spherePositions[0].distanceTo(this.spherePositions[2])
+    const diagonalLength2 = this.spherePositions[1].distanceTo(this.spherePositions[3])
+
+    // First cylinder connecting dots 0 and 2
+    const cylinderGeometry1 = new THREE.CylinderGeometry(
+      this.sphereRadii[0],
+      this.sphereRadii[2],
+      diagonalLength1,
+      CONFIG.BULLET.SPHERE_SEGMENTS
+    )
+    const cylinder1 = new THREE.Mesh(cylinderGeometry1, this.material)
+
+    const midpoint1 = this.spherePositions[0]
+      .clone()
+      .add(this.spherePositions[2])
+      .multiplyScalar(0.5)
+    cylinder1.position.copy(midpoint1)
+    cylinder1.lookAt(this.spherePositions[2])
+    cylinder1.rotateX(Math.PI / 2)
+
+    this.mesh.add(cylinder1)
+
+    // Second cylinder connecting dots 1 and 3
+    const cylinderGeometry2 = new THREE.CylinderGeometry(
+      this.sphereRadii[1],
+      this.sphereRadii[3],
+      diagonalLength2,
+      CONFIG.BULLET.CYLINDER_SEGMENTS
+    )
+    const cylinder2 = new THREE.Mesh(cylinderGeometry2, this.material)
+
+    const midpoint2 = this.spherePositions[1]
+      .clone()
+      .add(this.spherePositions[3])
+      .multiplyScalar(0.5)
+    cylinder2.position.copy(midpoint2)
+    cylinder2.lookAt(this.spherePositions[3])
+    cylinder2.rotateX(Math.PI / 2)
+
+    this.mesh.add(cylinder2)
+  }
+}
+
+class BulletGrid {
+  bullets = []
+
+  constructor(artifact) {
+    this.artifact = artifact
+    this.random = artifact.random
+    this.selector = new UniqueRandomSelector((a, b) => this.random.random_int(a, b))
+
+    this.#createBulletGrid()
+  }
+
+  #createBulletGrid() {
+    const { PADDING, COLS, ROWS, SPACING_VARIANCE } = CONFIG.BULLET_GRID
+
+    const fov = CONFIG.VIEW.FOV * (Math.PI / 180)
+    const cameraHeight = CONFIG.VIEW.POSITION[1]
+    const visibleHeight = 2 * cameraHeight * Math.tan(fov / 2)
+    const visibleWidth = visibleHeight * CONFIG.VIEW.ASPECT_RATIO
+
+    const gridWidth = visibleWidth * (1 - 2 * PADDING)
+    const gridHeight = visibleHeight * (1 - 2 * PADDING)
+
+    const spacingX = gridWidth / (COLS - 1)
+    const spacingZ = gridHeight / (ROWS - 1)
+
+    const positions = []
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        positions.push({ row, col })
+      }
+    }
+
+    const selectedPositions = this.selector.select(positions, this.artifact.state.shots)
+
+    selectedPositions.forEach(({ row, col }) => {
+      const bullet = new Bullet(this.artifact)
+
+      const randomOffsetX = this.random.random_num(
+        -spacingX * SPACING_VARIANCE,
+        spacingX * SPACING_VARIANCE
+      )
+      const randomOffsetZ = this.random.random_num(
+        -spacingZ * SPACING_VARIANCE,
+        spacingZ * SPACING_VARIANCE
+      )
+
+      bullet.mesh.position.x = -gridWidth / 2 + col * spacingX + randomOffsetX
+      bullet.mesh.position.y = 0
+      bullet.mesh.position.z = -gridHeight / 2 + row * spacingZ + randomOffsetZ
+
+      this.bullets.push(bullet)
+    })
+  }
+}
+
+class FighterCollision {
+  raycaster = new THREE.Raycaster()
+
+  mesh = createMirroredGroup(new THREE.ObjectLoader().parse(objData.collision), true)
+
+  normalHitAreas = []
+  criticalHitAreas = []
+
+  get meshesToCheck() {
+    return [...this.criticalHitAreas, ...this.normalHitAreas]
+  }
+
+  constructor(artifact) {
+    this.artifact = artifact
+    this.random = artifact.random
+    this.state = artifact.state
+
+    this.mesh.traverse((child) => {
+      if (!child.geometry) return
+
+      if (CONFIG.COLLISION.CRITICAL_HIT_NAMES.includes(child.name)) {
+        this.criticalHitAreas.push(child)
+      } else {
+        this.normalHitAreas.push(child)
+      }
+    })
+  }
+
+  checkHits() {
+    this.artifact.bulletGrid.bullets.forEach((bullet) => this.#checkBullet(bullet))
+  }
+
+  #checkBullet(bullet) {
+    const { HIT_RADIUS, NUM_RAYS } = CONFIG.COLLISION
+
+    const shootFromAbove = this.artifact.random.random_bool(0.5)
+    const direction = shootFromAbove ? new THREE.Vector3(0, -1, 0) : new THREE.Vector3(0, 1, 0)
+
+    const startPosition = bullet.mesh.position.clone()
+    startPosition.y = shootFromAbove ? 9 : -9
+
+    for (let rayIndex = 0; rayIndex < NUM_RAYS; rayIndex++) {
+      let rayPosition = startPosition.clone()
+
+      if (rayIndex > 0) {
+        const angle = ((rayIndex - 1) / (NUM_RAYS - 1)) * Math.PI * 2
+        const offsetX = Math.cos(angle) * HIT_RADIUS
+        const offsetZ = Math.sin(angle) * HIT_RADIUS
+        rayPosition.x += offsetX
+        rayPosition.z += offsetZ
+      }
+
+      this.raycaster.set(rayPosition, direction)
+
+      for (const mesh of this.meshesToCheck) {
+        const intersects = this.raycaster.intersectObject(mesh, false)
+
+        if (intersects.length > 0) {
+          const hitPoint = intersects[0].point
+          const critical =
+            this.criticalHitAreas.includes(mesh) &&
+            this.random.random_bool(CONFIG.DAMAGE.CRITICAL_CHANCE)
+
+          bullet.hit(hitPoint, critical)
+
+          return
+        }
+      }
+    }
+  }
+}
+
+class FighterWireframe {
+  constructor(artifact) {
+    this.materials = artifact.materials
+    this.state = artifact.state
+    this.scene = artifact.scene
+
+    this.initFighter()
+  }
+
+  initFighter() {
+    const objectLoader = new THREE.ObjectLoader()
+
+    // Initialize fighter visual
+    const fighterData = objectLoader.parse(objData.fighter)
+
+    // First apply materials to original geometries
+    fighterData.traverse((child) => {
+      if (!child.geometry) return
+
+      if (child.name === 'fighter.top') {
+        child.material = this.materials.fighter
+      } else {
+        child.material = this.materials.fighterBottom
+      }
+    })
+
+    this.mesh = createMirroredGroup(fighterData, true)
+
+    this.#convertToLine2()
+
+    this.scene.add(this.mesh)
+  }
+
+  #convertToLine2() {
+    const toReplace = []
+
+    // First, collect all LineSegments to replace
+    this.mesh.traverse((child) => {
+      if (!(child instanceof THREE.LineSegments)) return
+
+      toReplace.push({ child, parent: child.parent, material: child.material })
+    })
+
+    // Then replace them
+    toReplace.forEach(({ child, parent, material }) => {
+      const group = this.#createLine2FromSegments(child, material)
+      parent.add(group)
+      parent.remove(child)
+    })
+  }
+
+  #createLine2FromSegments(lineObject, material) {
+    const geometry = lineObject.geometry
+    const posArray = geometry.attributes.position.array
+    const group = new THREE.Group()
+
+    // Copy all transformations - crucial for mirrored objects
+    group.position.copy(lineObject.position)
+    group.rotation.copy(lineObject.rotation)
+    group.scale.copy(lineObject.scale)
+    group.name = lineObject.name
+
+    // Create Line2 for each segment pair
+    for (let i = 0; i < posArray.length; i += 6) {
+      if (i + 5 >= posArray.length) break
+
+      const positions = [
+        posArray[i],
+        posArray[i + 1],
+        posArray[i + 2],
+        posArray[i + 3],
+        posArray[i + 4],
+        posArray[i + 5],
+      ]
+
+      const lineGeometry = new LineGeometry()
+      lineGeometry.setPositions(positions)
+
+      group.add(new Line2(lineGeometry, material))
+    }
+
+    return group
+  }
+
+  updateBottomOpacity(camera) {
+    // Calculate camera's view angle relative to the horizon
+    const cameraDir = new THREE.Vector3()
+    camera.getWorldDirection(cameraDir)
+
+    // Get the angle between camera direction and down vector (0, -1, 0)
+    const downVector = new THREE.Vector3(0, -1, 0)
+    const dotProduct = cameraDir.dot(downVector)
+
+    // dotProduct is 1 when looking straight down, 0 at horizon
+    // We want opacity to be 0 when looking down, 1 near horizon
+    const horizonThreshold = CONFIG.FIGHTER.BOTTOM_OPACITY_THRESHOLD
+
+    let opacity = 0
+    if (dotProduct < horizonThreshold) {
+      // Closer to horizon, increase opacity
+      opacity = 1 - dotProduct / horizonThreshold
+    }
+
+    // Apply opacity to bottom meshes
+    this.materials.fighterBottom.opacity = opacity
+  }
+
+  shootDown() {
+    this.mesh.visible = false
+  }
+
+  deform(position, damage) {
+    if (!position || !damage) return
+
+    this.mesh.traverse((child) => {
+      if (child instanceof Line2) {
+        this.#deformLine2(child, position, damage)
+      }
+    })
+  }
+
+  #deformLine2(line2, hitPoint, level = 1) {
+    const geometry = line2.geometry
+
+    const startPositions = geometry.attributes.instanceStart.array
+    const endPositions = geometry.attributes.instanceEnd.array
+
+    const deformRadius = CONFIG.DAMAGE.DEFORM_RADIUS
+    const deformStrength = CONFIG.DAMAGE.DEFORM_STRENGTH * level
+    const holeRadius = CONFIG.DAMAGE.HOLE_RADIUS
+    const shouldCreateHole = level >= CONFIG.DAMAGE.HOLE_LEVEL_THRESHOLD
+
+    // Deform start positions
+    for (let i = 0; i < startPositions.length; i += 3) {
+      const vertex = new THREE.Vector3(
+        startPositions[i],
+        startPositions[i + 1],
+        startPositions[i + 2]
+      )
+
+      // Calculate distance in world space
+      const dx = vertex.x - hitPoint.x
+      const dy = vertex.y - hitPoint.y
+      const dz = vertex.z - hitPoint.z
+      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+
+      if (distance < holeRadius && shouldCreateHole) {
+        startPositions[i] = NaN
+        startPositions[i + 1] = NaN
+        startPositions[i + 2] = NaN
+      } else if (distance < deformRadius && distance > holeRadius) {
+        const deformAmount =
+          deformStrength * (1 - (distance - holeRadius) / (deformRadius - holeRadius))
+
+        const dirX = dx / distance
+        const dirY = dy / distance
+        const dirZ = dz / distance
+
+        startPositions[i] += dirX * deformAmount
+        startPositions[i + 1] += dirY * deformAmount * CONFIG.DAMAGE.DEFORM_Y_MULTIPLIER
+        startPositions[i + 2] += dirZ * deformAmount
+      }
+    }
+
+    // Deform end positions
+    for (let i = 0; i < endPositions.length; i += 3) {
+      const vertex = new THREE.Vector3(
+        endPositions[i],
+        endPositions[i + 1],
+        endPositions[i + 2]
+      )
+
+      // Calculate distance in world space
+      const dx = vertex.x - hitPoint.x
+      const dy = vertex.y - hitPoint.y
+      const dz = vertex.z - hitPoint.z
+      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+
+      if (distance < holeRadius && shouldCreateHole) {
+        endPositions[i] = NaN
+        endPositions[i + 1] = NaN
+        endPositions[i + 2] = NaN
+      } else if (distance < deformRadius && distance > holeRadius) {
+        const deformAmount =
+          deformStrength * (1 - (distance - holeRadius) / (deformRadius - holeRadius))
+
+        const dirX = dx / distance
+        const dirY = dy / distance
+        const dirZ = dz / distance
+
+        endPositions[i] += dirX * deformAmount
+        endPositions[i + 1] += dirY * deformAmount * CONFIG.DAMAGE.DEFORM_Y_MULTIPLIER
+        endPositions[i + 2] += dirZ * deformAmount
+      }
+    }
+  }
+}
+
+class Artifact {
+  state = {
+    hash: CONFIG.PREMINT_HASH,
+    shots: 0,
+    isDark: false,
+    damage: 0,
+    hits: 0,
+    criticalHits: 0,
+  }
+
+  scene = new THREE.Scene()
+
+  camera = new THREE.PerspectiveCamera(
+    CONFIG.VIEW.FOV,
+    CONFIG.VIEW.ASPECT_RATIO,
+    CONFIG.VIEW.NEAR,
+    CONFIG.VIEW.FAR
+  )
+
+  commands = new CommandTracker()
+
+  controls = null
+
+  renderer = new THREE.WebGLRenderer({ antialias: true })
+
+  materials = {
+    fighter: new LineMaterial({
+      color: CONFIG.COLORS.BLACK,
+      linewidth: CONFIG.FIGHTER.LINE_WIDTH,
+      worldUnits: true,
+      alphaToCoverage: true,
+    }),
+    fighterBottom: new LineMaterial({
+      color: CONFIG.COLORS.BLACK,
+      linewidth: CONFIG.FIGHTER.LINE_WIDTH,
+      worldUnits: true,
+      transparent: true,
+    }),
+    bullet: new THREE.MeshBasicMaterial({
+      color: CONFIG.COLORS.BLACK,
+    }),
+    bulletCritical: new THREE.MeshBasicMaterial({
+      color: CONFIG.COLORS.CRITICAL,
+    }),
+  }
+
+  constructor({ seed, shots } = { seed: '', shots: 0 }) {
+    this.state.shots = shots
+    this.state.hash = seed
+
+    this.random = new Random(this.state.hash)
+
+    // Set up scene and UI
+    this.#initScene()
+    this.#initCommands()
+
+    // Create bullet grid and run collision detection
+    this.#initObjects()
+  }
+
+  #initScene() {
+    this.scene.background = new THREE.Color(CONFIG.COLORS.WHITE)
+
+    // Camera setup - top down view
+    this.camera.position.set(...CONFIG.VIEW.POSITION)
+    this.camera.lookAt(0, 0, 0)
+
+    // Renderer setup
+    this.renderer.setPixelRatio(window.devicePixelRatio)
+    this.#resize()
+    window.addEventListener('resize', () => this.#resize())
+  }
+
+  #initCommands() {
+    this.commands.register('/controls', () => this.#initializeControls())
+    this.commands.register('/vv', () => this.#toggleDarkMode())
+  }
+
+  #initObjects() {
+    this.bulletGrid = new BulletGrid(this)
+    this.fighterCollision = new FighterCollision(this)
+    this.fighterWireframe = new FighterWireframe(this)
+  }
+
+  generate() {
+    this.fighterCollision.checkHits()
+
+    if (this.state.damage > CONFIG.DAMAGE.THRESHOLD) {
+      this.fighterWireframe.shootDown()
+    } else {
+      this.fighterWireframe.deform()
+    }
+  }
+
+  attach(container = 'main') {
+    document.querySelector(container).appendChild(this.renderer.domElement)
+  }
+
+  #resize() {
+    let width, height
+
+    if (window.innerWidth / window.innerHeight > CONFIG.VIEW.ASPECT_RATIO) {
+      height = window.innerHeight
+      width = height * CONFIG.VIEW.ASPECT_RATIO
+    } else {
+      width = window.innerWidth
+      height = width / CONFIG.VIEW.ASPECT_RATIO
+    }
+
+    this.renderer.setSize(width, height)
+  }
+
+  #initializeControls() {
+    if (this.controls) return
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+    this.controls.enableDamping = true
+    this.controls.enablePan = false
+    this.controls.enableZoom = false
+    this.controls.maxPolarAngle = Math.PI / 2 - CONFIG.VIEW.MAX_POLAR_ANGLE_OFFSET; // 90° - 5° = 85° from vertical
+
+    console.info('Controls enabled')
+  }
+
+  #toggleDarkMode() {
+    this.state.isDark = !this.state.isDark
+
+    const bg = this.state.isDark ? CONFIG.COLORS.BLACK : CONFIG.COLORS.WHITE
+    const color = this.state.isDark ? CONFIG.COLORS.WHITE : CONFIG.COLORS.BLACK
+
+    this.scene.background = new THREE.Color(bg)
+
+    this.#setMaterialColor('fighter', color)
+    this.#setMaterialColor('fighterBottom', color)
+    this.#setMaterialColor('bullet', color)
+
+    console.info(`Mode switched to ${this.state.isDark ? 'dark' : 'light'}`)
+  }
+
+  #setMaterialColor(name, color) {
+    this.materials[name]?.color.setHex(color)
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate())
+
+    // Update controls if enabled
+    this.controls?.update()
+
+    // Update bottom mesh opacity based on camera angle
+    this.fighterWireframe.updateBottomOpacity(this.camera)
+
+    // Render scene
+    this.renderer.render(this.scene, this.camera)
+  }
+
+  generateMetadata() {
+    const accuracy = this.state.shots > 0 ? this.state.hits / this.state.shots : 0
+    const survived = this.state.damage <= CONFIG.DAMAGE.THRESHOLD
+    const damagePerHit = this.state.hits ? Math.round(this.state.damage / this.state.hits) : 0
+
+    // Determine luck based on survival and accuracy
+    let lucky
+    const {
+      CLOSE_CALL_BULLETS,
+      LOW_ACCURACY,
+      HIGH_ACCURACY,
+      LOW_DAMAGE_PER_HIT,
+      LOW_HIT_NUMBER,
+    } = CONFIG.METADATA.LUCK_THRESHOLDS
+
+    const closeCallDiff = damagePerHit * CLOSE_CALL_BULLETS
+
+    if (!survived && this.state.criticalHits && this.state.hits < LOW_HIT_NUMBER) {
+      lucky = false
+      console.info('Shot down with critical hit')
+    } else if (
+      survived &&
+      damagePerHit <= LOW_DAMAGE_PER_HIT &&
+      this.state.hits > LOW_HIT_NUMBER
+    ) {
+      lucky = true
+      console.info('Survived with low per hit damage')
+    } else if (survived && CONFIG.DAMAGE.THRESHOLD - this.state.damage < closeCallDiff) {
+      lucky = true
+      console.info('Survived with close call')
+    } else if (
+      !survived &&
+      Math.abs(CONFIG.DAMAGE.THRESHOLD - this.state.damage) < closeCallDiff
+    ) {
+      lucky = false
+      console.info('Shot down with close call')
+    } else if (survived && accuracy <= LOW_ACCURACY && this.state.hits > LOW_HIT_NUMBER) {
+      lucky = true; // Survived with low accuracy
+      console.info('Survived with low accuracy')
+    } else if (!survived && accuracy >= HIGH_ACCURACY && this.state.hits < LOW_HIT_NUMBER) {
+      lucky = false; // Shot down with high accuracy
+      console.info('Shot down with high accuracy')
+    }
+
+    return {
+      Shots: this.state.shots,
+      Accuracy: Math.round(accuracy * 100),
+      Hits: this.state.hits,
+      'Critical Hits': this.state.criticalHits,
+      'Total Damage': this.state.damage,
+      'Damage per Hit': damagePerHit,
+      Survived: survived ? 'Yes' : 'No',
+      Luck: lucky === undefined ? undefined : lucky ? 'Lucky' : 'Unlucky',
+    }
+  }
+}
+
+// =======================================================================
+// Artifact Code
+// =======================================================================
+
+const postParamData = tokenData?.externalAssetDependencies?.[0]
+const claimHash = postParamData?.data?.claimHash || CONFIG.PREMINT_HASH
+const isPremint = claimHash === CONFIG.PREMINT_HASH
+const id = parseInt(tokenData.tokenId.slice(-3)) || 0
+
+// Initialize and start the artifact
+const artifact = new Artifact({ seed: claimHash, shots: isPremint ? 0 : id })
+artifact.generate()
+artifact.attach('body')
+artifact.animate()
+
+// Allow for rendering hook
+window.RENDERED = true
+
+// Generate Metadata
+window.METADATA = artifact.generateMetadata()
+
+</script></body></html>
