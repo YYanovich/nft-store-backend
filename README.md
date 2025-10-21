@@ -74,3 +74,4 @@ npm run dev
     - `price` (Number)
     - `image` (File)
   - Returns the newly created NFT object as JSON.
+# Updated Tue Oct 21 18:10:31 EEST 2025
