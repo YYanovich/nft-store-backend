@@ -2,6 +2,8 @@
 
 This is the backend service for the NFT Marketplace application, built with Node.js, Express, and TypeScript. It handles NFT data management, storage, and provides a RESTful API for the frontend.
 
+Vercel deploy 
+nft-store-backend-phi.vercel.app
 
 ## Tech Stack
 

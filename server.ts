@@ -18,12 +18,12 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
-  app.use(
-    cors({
-      origin: allowedOrigins,
-    })
-  );
-    
+app.use(
+  cors({
+    origin: allowedOrigins,
+  })
+);
+
 app.use(express.json());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -41,7 +41,6 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err: any) => {
     console.error("Data base error", err);
-    // show full error in case Vercel logs truncate
     console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
   });
 
