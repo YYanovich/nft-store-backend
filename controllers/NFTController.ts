@@ -6,7 +6,8 @@ export const getAllNFT = async (req: Request, res: Response) => {
     const nfts = await NFT.find().sort({ createdAt: -1 });
     res.status(200).json(nfts);
   } catch (e: any) {
-    res.status(500).json({ message: "Error with getting NFTs", e });
+    console.error('Error with getting NFTs:', e);
+    res.status(500).json({ message: "Error with getting NFTs", error: e?.message || e });
   }
 };
 
@@ -18,7 +19,7 @@ export const createNFT = async (req: Request, res: Response) => {
 
     const { name, description, price } = req.body;
     if (!name || !description || !price) {
-      res.status(400).json({ mesage: "name, description and price are required" });
+      return res.status(400).json({ message: "name, description and price are required" });
     }
 
     const imgUrl = `/uploads/${req.file.filename}`;
@@ -31,6 +32,7 @@ export const createNFT = async (req: Request, res: Response) => {
     });
     res.status(201).json(addNFT);
   } catch (e: any) {
-    res.status(500).json({ message: "Error with adding new NFT", e });
+    console.error('Error with adding new NFT:', e);
+    res.status(500).json({ message: "Error with adding new NFT", error: e?.message || e });
   }
 };

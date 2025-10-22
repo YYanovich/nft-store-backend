@@ -12,11 +12,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT;
 
-const allowedOrigins = ["http://localhost:3000", "http://localhost:5173", "https://nft-store-frontend-two.vercel.app"];
+const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
 
-// if (process.env.FRONTEND_URL) {
-//   allowedOrigins.push(process.env.FRONTEND_URL);
-// }
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 
   app.use(
     cors({
@@ -30,7 +30,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/NFTs", NFTRoutes);
 
-app.get("allNFT", (req: Request, res: Response) => {
+app.get("/allNFT", (req: Request, res: Response) => {
   res.status(200).json({ status: "UP" });
 });
 
@@ -39,7 +39,11 @@ const server = http.createServer(app);
 mongoose
   .connect(process.env.MONGO_URI!)
   .then(() => console.log("MongoDB connected"))
-  .catch((err: any) => console.error("Data base error", err));
+  .catch((err: any) => {
+    console.error("Data base error", err);
+    // show full error in case Vercel logs truncate
+    console.error(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+  });
 
 server.listen(PORT, () => {
   console.log(`Server is working on port ${PORT}`);
